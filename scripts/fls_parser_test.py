@@ -11,10 +11,7 @@ from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 from Norbit_FLS_driver.msg import Fls
 
-__author__ = "Aldo Teran"
-__author_email = "aldot@kth.se"
-__license__ = "MIT"
-__status__ = "Development"
+
 
 
 
@@ -235,7 +232,7 @@ class FlsParser:
         step_char,step_size = self.dtype_map[dtype]
         parse_str = '<{}'.format(step_char)
 
-        print("M={} N={}, num pixels={}".format(M,N,M*N))
+        # print("M={} N={}, num pixels={}".format(M,N,M*N))
         pixel_values = []
         for i in range(M * N):
             offset = 192 + i * step_size
@@ -274,21 +271,21 @@ class FlsNode:
     BUFFER_SIZE_BYTES = 512000
 
     def __init__(self):
-        self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        while not rospy.is_shutdown():
-            try:
-                self.tcp_sock.connect((self.FLS_IP, self.FLS_PORT))
-                rospy.loginfo("TCP socket successfully bound to: %s:%i", self.FLS_IP,
-                            self.FLS_PORT)
-                break
-            except:
-                rospy.logerr("Failed to bind socket to %s:%s. Check ethernet configuration \
-                            and restart the node.", self.FLS_IP, self.FLS_PORT)
-                rospy.sleep(1)
-                #raise
+        # self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # while not rospy.is_shutdown():
+        #     try:
+        #         self.tcp_sock.connect((self.FLS_IP, self.FLS_PORT))
+        #         rospy.loginfo("TCP socket successfully bound to: %s:%i", self.FLS_IP,
+        #                     self.FLS_PORT)
+        #         break
+        #     except:
+        #         rospy.logerr("Failed to bind socket to %s:%s. Check ethernet configuration \
+        #                     and restart the node.", self.FLS_IP, self.FLS_PORT)
+        #         rospy.sleep(1)
+        #         #raise
 
-        # Set a timout for the socket.
-        self.tcp_sock.settimeout(2)
+        # # Set a timout for the socket.
+        # self.tcp_sock.settimeout(2)
 
         # Build our parser.
         self.p = FlsParser()
@@ -304,41 +301,43 @@ class FlsNode:
         self.data_pub = rospy.Publisher("fls/data", Fls, queue_size=1)
 
 
-    def parse_and_publish(self):
+    def parse_and_publish(self, data):
         """
         Parse and publish the data recived from the ICP socket.
         """
         # Get data from udp socket
-        try:
-            # Fetch the initial chunk.
-            data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
-            # Quick check of the deadbeef.
-            if self.p.parse_preamble(data) != 0xDEADBEEF:
-                rospy.logerr("Message did not pass the deadbeef check!")
-                return
-
-            self.data_buffer += data
-
-            # Get the expected size of the packet.
-            M = self.p.parse_num_samples(data)
-            N = self.p.parse_num_beams(data)
-            dtype = self.p.parse_dtype(data)
-            _,step_size = self.p.dtype_map[dtype]
-            expected_size_bytes = 192 + M*N*step_size + 4*N
-            real_size = self.p.parse_size(data)
-
-            # Keep looping until the full message is completely received.
-            while len(self.data_buffer) < expected_size_bytes:
-                try:
-                    data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
-                    self.data_buffer += data
-                except:
-                    print("something went wrong in the msg reconstruction loop")
-
-        except socket.timeout:
-            rospy.logerr("Command interface socket timed out, verify connection.")
+        
+        # Fetch the initial chunk.
+        # data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
+        
+        
+        # Quick check of the deadbeef.
+        if self.p.parse_preamble(data) != 0xDEADBEEF:
+            rospy.logerr("Message did not pass the deadbeef check!")
             return
 
+        self.data_buffer += data
+
+        # Get the expected size of the packet.
+        M = self.p.parse_num_samples(data)
+        N = self.p.parse_num_beams(data)
+        dtype = self.p.parse_dtype(data)
+        _,step_size = self.p.dtype_map[dtype]
+        expected_size_bytes = 192 + M*N*step_size + 4*N
+        real_size = self.p.parse_size(data)
+
+            # Keep looping until the full message is completely received.
+        #     while len(self.data_buffer) < expected_size_bytes:
+        #         try:
+        #             data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
+        #             self.data_buffer += data
+        #         except:
+        #             print("something went wrong in the msg reconstruction loop")
+
+        # except socket.timeout:
+        #     rospy.logerr("Command interface socket timed out, verify connection.")
+        #     return
+        self.data_buffer = data
         print("Final size of the concat msg={}".format(len(self.data_buffer)))
 
         # Get the pixel and beam directions arrays.
@@ -410,6 +409,7 @@ class FlsNode:
 
 
 
+
 def main():
     """
     Main method for the ROS node.
@@ -417,11 +417,17 @@ def main():
     rospy.init_node('fls_parser')
     rospy.loginfo("Starting the FLS parsing node...")
     fls = FlsNode()
-
+    
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        fls.parse_and_publish()
-        rate.sleep()
+        with open ("/home/raytoningu/od/src/Norbit_FLS_driver/data/fls_tcp_400khz_100m.bin", "rb") as myfile:
+            chunk1 = myfile.read(16)
+            size = fls.p.parse_size(chunk1)
+
+            chunk2=myfile.read(fls.p.parse_size(myfile.read(16)))
+            chunk = chunk1 + chunk2
+            fls.parse_and_publish(chunk)
+            rate.sleep()
 
 if __name__ == "__main__":
     main()
