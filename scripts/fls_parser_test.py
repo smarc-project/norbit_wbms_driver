@@ -401,6 +401,8 @@ class FlsNode:
         flsmsg.beam_dist_mode = self.p.parse_beam_dist_mode(self.data_buffer)
         flsmsg.sonar_mode = self.p.parse_sonar_mode(self.data_buffer)
         flsmsg.gate_tilt = self.p.parse_gate_tilt(self.data_buffer)
+        flsmsg.fls_image = image
+        flsmsg.fls_raw = array
         self.data_pub.publish(flsmsg)
         # Reset the data buffer.
         self.data_buffer = b''
