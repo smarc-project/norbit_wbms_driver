@@ -28,5 +28,4 @@ float32 tx_voltage
 uint8 beam_dist_mode
 uint8 sonar_mode
 float32 gate_tilt
-sensor_msgs/Image fls_image
 std_msgs/Float32MultiArray fls_raw

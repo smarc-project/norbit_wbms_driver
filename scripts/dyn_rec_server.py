@@ -79,6 +79,12 @@ class CommandInterface:
             elif key == "set_tx_Frequency":
                 msg = "set_tx" + " " + str(conf[key]) + " " + str(conf["set_tx_Bandwidth"]) + " " + str(conf["set_tx_amp"]) + " " + str(conf["set_tx_pulse_length"])
                 self.send_msg(msg)
+            elif key == "set_power_mode":
+                if conf[key]==0:
+                    msg = "off"
+                else:
+                    msg = "on"
+                self.send_msg(msg)
             else:
                 msg = key + " " + str(conf[key])
                 self.send_msg(msg)
@@ -122,6 +128,13 @@ class CommandInterface:
                 elif key == "set_tx_Frequency" or key == "set_tx_Bandwidth" or key == "set_tx_amp" or key == "set_tx_pulse_length":
                     msg = "set_tx" + " " + str(config2["set_tx_Frequency"]) + " " + str(config2["set_tx_Bandwidth"]) + " " + str(config2["set_tx_amp"]) + " " + str(config2["set_tx_pulse_length"])
                     config1["set_tx_Frequency"], config1["set_tx_Bandwidth"], config1["set_tx_amp"], config1["set_tx_pulse_length"] = config2["set_tx_Frequency"], config2["set_tx_Bandwidth"], config2["set_tx_amp"], config2["set_tx_pulse_length"]
+                    self.send_msg(msg)
+                elif key == "set_power_mode":
+                    if config2[key]==0:
+                        msg = "off"
+                    else:
+                        msg = "on"
+                    config1[key] = config2[key]
                     self.send_msg(msg)
                 else:
                     msg = key + " " + str(config2[key])

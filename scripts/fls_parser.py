@@ -354,7 +354,7 @@ class FlsNode:
                                    # depending on the data's dtype...
         image.step = image.width * 1
         image.data =  np.array(pixel_data, dtype='uint8').tolist()
-        # self.img_pub.publish(image)
+        self.img_pub.publish(image)
 
         # Build the multi array.
         array = Float32MultiArray()
@@ -402,7 +402,6 @@ class FlsNode:
         flsmsg.beam_dist_mode = self.p.parse_beam_dist_mode(self.data_buffer)
         flsmsg.sonar_mode = self.p.parse_sonar_mode(self.data_buffer)
         flsmsg.gate_tilt = self.p.parse_gate_tilt(self.data_buffer)
-        flsmsg.fls_image = image
         flsmsg.fls_raw = array
         self.data_pub.publish(flsmsg)
         # Reset the data buffer.
