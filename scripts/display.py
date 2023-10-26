@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist
 from visualization_msgs.msg import Marker
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
-from Norbit_FLS_driver.msg import Fls
+from norbit_fls_driver.msg import Fls
 
 
 

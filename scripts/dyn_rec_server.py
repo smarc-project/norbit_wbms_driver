@@ -7,8 +7,8 @@ import socket
 import rospy
 from std_msgs.msg import Float32
 from dynamic_reconfigure.server import Server
-from Norbit_FLS_driver.cfg import fls_paramsConfig 
-from Norbit_FLS_driver.msg import Configs
+from norbit_fls_driver.cfg import fls_paramsConfig 
+from norbit_fls_driver.msg import Configs
 from rospy_message_converter import message_converter
 
 

@@ -6,9 +6,9 @@ import socket
 
 import rospy
 from std_msgs.msg import Float32
-from Norbit_FLS_driver.cfg import fls_paramsConfig 
+from norbit_fls_driver.cfg import fls_paramsConfig 
 from rospy_message_converter import message_converter
-from Norbit_FLS_driver.msg import Configs
+from norbit_fls_driver.msg import Configs
 
 from copy import deepcopy
 
@@ -120,7 +120,7 @@ def main():
     while not rospy.is_shutdown():
         if iter >len(dictlist)-1:
             iter = 0
-        msg = message_converter.convert_dictionary_to_ros_message('Norbit_FLS_driver/Configs', dictlist[iter])
+        msg = message_converter.convert_dictionary_to_ros_message('norbit_fls_driver/Configs', dictlist[iter])
         iter = iter + 1
         pub.publish(msg)
         rate.sleep()

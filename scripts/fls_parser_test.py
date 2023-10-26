@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Norbit's FLS data parser.
+norbit's FLS data parser.
 """
 import struct
 import socket
@@ -9,7 +9,7 @@ import numpy as np
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
-from Norbit_FLS_driver.msg import Fls
+from norbit_fls_driver.msg import Fls
 
 
 
@@ -19,7 +19,7 @@ class FlsParser:
     """
     Class for handling the raw logic of parsing a raw FLS data packet.
 
-    Based on Sec. 8.2 of the Norbit's TN-180196 document.
+    Based on Sec. 8.2 of the norbit's TN-180196 document.
     """
     def __init__(self):
         # Map from dtype to corresponding byte size for stepping and format
@@ -260,7 +260,7 @@ class FlsParser:
 
 class FlsNode:
     """
-    Class to handle the HEX parsing from an Norbit's FLS data stream.
+    Class to handle the HEX parsing from an norbit's FLS data stream.
     """
 
     # FLS's IP and port.
@@ -422,7 +422,7 @@ def main():
     
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        with open ("/home/raytoningu/od/src/Norbit_FLS_driver/data/fls_tcp_400khz_100m.bin", "rb") as myfile:
+        with open ("/home/raytoningu/od/src/norbit_fls_driver/data/fls_tcp_400khz_100m.bin", "rb") as myfile:
             chunk1 = myfile.read(16)
             size = fls.p.parse_size(chunk1)
 
