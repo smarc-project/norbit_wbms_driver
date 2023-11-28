@@ -4,61 +4,61 @@ import rospy
 import math
 
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32MultiArray
 import numpy as np
-from geometry_msgs.msg import Twist
-from visualization_msgs.msg import Marker
 import cv2
-from cv_bridge import CvBridge, CvBridgeError
 from norbit_fls_driver.msg import Fls
 
 
-
-
 def data_callback(msg):
-    global num_beams, beam_samples
+    #New FLS data
     beam_samples= msg.num_samples
     num_beams = msg.num_beams
-    data = msg.fls_raw.data
-        # Separate the data into imagearray and directions
-    imagearray = np.array(data[:-num_beams], dtype=np.float32)
-    imagearray = imagearray.reshape((beam_samples, num_beams))
-    directions = np.array(data[-num_beams:], dtype=np.float32) + math.pi/2
-    rospy.loginfo(directions)
+    aperture = msg.swath_open
+    height = msg.num_samples
+    width = msg.num_beams
+    imagearray = np.array(msg.fls_raw.data[:-width])
+    imagearray = np.reshape(imagearray, (height,width))
+
+    #filter data
+    imagearray = np.log(imagearray)
 
     # Normalize the imagearray between 0 and 255
-    max_value = np.max(imagearray)
-    imagearray = (255 / max_value) * imagearray
+    max_value = np.max(imagearray[imagearray != -math.inf])
+    min_value = np.min(imagearray[imagearray != -math.inf])
+    imagearray = (imagearray - min_value) * (255.0 / (max_value - min_value))
+    imagearray[imagearray < 0] = 0
+    rospy.loginfo([min_value, max_value, np.min(imagearray), np.max(imagearray)])
 
-    # Calculate the final indices without explicit loops
-    j = np.arange(beam_samples)[:, np.newaxis]
-    final_array_x = np.round(beam_samples + j * np.cos(directions)).astype(int)
-    final_array_y = np.round(beam_samples - j * np.sin(directions)).astype(int)
+    #Add more data to image to cover 360 deg
+    aperture = np.degrees(aperture)
+    not_covered = 360 - aperture
+    step = aperture / width
+    toadd = int(not_covered / step)
+    offset = 190
+    imagearray = np.concatenate((np.zeros((height, offset)), imagearray[:,0:], np.zeros((height, toadd-offset))), axis=1)
 
-    # Clip the indices to stay within the final_array dimensions
-    final_array_x = np.clip(final_array_x, 0, beam_samples*2-1)
-    final_array_y = np.clip(final_array_y, 0, beam_samples-1)
+    #Convert to cv2 image
+    cv_pic = imagearray.astype(np.float32)
+    cv_pic = cv2.transpose(cv_pic)
 
-    # Create the final_array using indexing
-    final_array = np.zeros((beam_samples, beam_samples*2), dtype=np.uint8)
-    final_array[final_array_y, final_array_x] = imagearray[np.arange(beam_samples)[:, np.newaxis], np.arange(num_beams)]
+    #Do inverse polar transform
+    cartisian_image = cv2.warpPolar(cv_pic, (height,height), (height/2, height/2), height/2, cv2.WARP_INVERSE_MAP)
+
+    #output_image = cv_pic
+    output_image = cartisian_image
+    output_image = output_image.astype(np.uint8)
+    output_image = cv2.flip(output_image,1)
 
     # Create the final Image message
     final = Image()
-    final.data = final_array.flatten().tolist()
-    final.width = beam_samples*2
-    final.height = beam_samples
+    final.data = output_image.flatten().tolist()
+    final.width = np.size(output_image,1)
+    final.height = np.size(output_image,0)
     final.encoding = "mono8"
     final.is_bigendian = 0
     final.step = beam_samples*2
     pub.publish(final)
     
-
-
-
-
-    
-
 rospy.init_node('displayer')
 # sub_goal = rospy.Subscriber('/lolo/sim/fls/image', Image, image_callback)
 sub_parser = rospy.Subscriber('/fls/data', Fls, data_callback)
