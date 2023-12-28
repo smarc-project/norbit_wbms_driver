@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(norbit_fls_driver)
+project(norbit_wbms_driver)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -52,7 +52,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  Fls.msg
+  WaterColumn.msg
   Configs.msg
 )
 
@@ -93,7 +93,7 @@ generate_messages(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  cfg/fls_params.cfg
+  cfg/wbms_params.cfg
 )
 
 ###################################

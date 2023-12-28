@@ -6,15 +6,15 @@ import socket
 
 import rospy
 from std_msgs.msg import Float32
-from norbit_fls_driver.cfg import fls_paramsConfig 
+from norbit_wbms_driver.cfg import wbms_paramsConfig 
 from rospy_message_converter import message_converter
-from norbit_fls_driver.msg import Configs
+from norbit_wbms_driver.msg import Configs
 
 from copy import deepcopy
 
 def create_configs():
     configlist = []
-    config1 = fls_paramsConfig.defaults.copy()
+    config1 = wbms_paramsConfig.defaults.copy()
     
     #Standard stuff
     config1['set_power_mode'] = 1
@@ -120,7 +120,7 @@ def main():
     while not rospy.is_shutdown():
         if iter >len(dictlist)-1:
             iter = 0
-        msg = message_converter.convert_dictionary_to_ros_message('norbit_fls_driver/Configs', dictlist[iter])
+        msg = message_converter.convert_dictionary_to_ros_message('norbit_wbms_driver/Configs', dictlist[iter])
         iter = iter + 1
         pub.publish(msg)
         rate.sleep()

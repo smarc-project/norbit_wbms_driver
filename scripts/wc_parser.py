@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-norbit's FLS data parser.
+norbit data parser.
 """
 import struct
 import socket
@@ -9,15 +9,17 @@ import numpy as np
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
-from norbit_fls_driver.msg import Fls
+from norbit_wbms_driver.msg import WaterColumn
+__author__ = "Aldo Teran"
+__author_email = "aldot@kth.se"
+__license__ = "MIT"
+__status__ = "Development"
 
 
 
-
-
-class FlsParser:
+class WCParser:
     """
-    Class for handling the raw logic of parsing a raw FLS data packet.
+    Class for handling the raw logic of parsing a raw data packet.
 
     Based on Sec. 8.2 of the norbit's TN-180196 document.
     """
@@ -232,7 +234,7 @@ class FlsParser:
         step_char,step_size = self.dtype_map[dtype]
         parse_str = '<{}'.format(step_char)
 
-        # print("M={} N={}, num pixels={}".format(M,N,M*N))
+        print("M={} N={}, num pixels={}".format(M,N,M*N))
         pixel_values = []
         for i in range(M * N):
             offset = 192 + i * step_size
@@ -258,37 +260,38 @@ class FlsParser:
 
 
 
-class FlsNode:
+class WbmsNode:
     """
-    Class to handle the HEX parsing from an norbit's FLS data stream.
+    Class to handle the HEX parsing from an norbit sonar's data stream.
     """
 
-    # FLS's IP and port.
-    FLS_IP = "192.168.1.89"
+    # sonar's IP and port.
+    #sonar_IP = "192.168.1.89"
+    sonar_IP = "192.168.53.53"
     # Water column data port.
-    FLS_PORT = 2211
+    sonar_PORT = 2211
 
     BUFFER_SIZE_BYTES = 512000
 
     def __init__(self):
-        # self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # while not rospy.is_shutdown():
-        #     try:
-        #         self.tcp_sock.connect((self.FLS_IP, self.FLS_PORT))
-        #         rospy.loginfo("TCP socket successfully bound to: %s:%i", self.FLS_IP,
-        #                     self.FLS_PORT)
-        #         break
-        #     except:
-        #         rospy.logerr("Failed to bind socket to %s:%s. Check ethernet configuration \
-        #                     and restart the node.", self.FLS_IP, self.FLS_PORT)
-        #         rospy.sleep(1)
-        #         #raise
+        self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        while not rospy.is_shutdown():
+            try:
+                self.tcp_sock.connect((self.sonar_IP, self.sonar_PORT))
+                rospy.loginfo("TCP socket successfully bound to: %s:%i", self.sonar_IP,
+                            self.sonar_PORT)
+                break
+            except:
+                rospy.logerr("Failed to bind socket to %s:%s. Check ethernet configuration \
+                            and restart the node.", self.sonar_IP, self.sonar_PORT)
+                rospy.sleep(1)
+                #raise
 
-        # # Set a timout for the socket.
-        # self.tcp_sock.settimeout(2)
+        # Set a timout for the socket.
+        self.tcp_sock.settimeout(2)
 
         # Build our parser.
-        self.p = FlsParser()
+        self.p = WCParser()
 
         # Create the buffer where we'll store the data being streamed in.
         self.data_buffer = b''
@@ -298,46 +301,44 @@ class FlsNode:
                                        Image, queue_size=1)
         self.raw_pub = rospy.Publisher("fls/raw",
                                        Float32MultiArray, queue_size=1)
-        self.data_pub = rospy.Publisher("fls/data", Fls, queue_size=1)
+        self.data_pub = rospy.Publisher("fls/data", WaterColumn, queue_size=1)
 
 
-    def parse_and_publish(self, data):
+    def parse_and_publish(self):
         """
         Parse and publish the data recived from the ICP socket.
         """
         # Get data from udp socket
-        
-        # Fetch the initial chunk.
-        # data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
-        
-        
-        # Quick check of the deadbeef.
-        if self.p.parse_preamble(data) != 0xDEADBEEF:
-            rospy.logerr("Message did not pass the deadbeef check!")
-            return
+        try:
+            # Fetch the initial chunk.
+            data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
+            # Quick check of the deadbeef.
+            if self.p.parse_preamble(data) != 0xDEADBEEF:
+                rospy.logerr("Message did not pass the deadbeef check!")
+                return
 
-        self.data_buffer += data
+            self.data_buffer += data
 
-        # Get the expected size of the packet.
-        M = self.p.parse_num_samples(data)
-        N = self.p.parse_num_beams(data)
-        dtype = self.p.parse_dtype(data)
-        _,step_size = self.p.dtype_map[dtype]
-        expected_size_bytes = 192 + M*N*step_size + 4*N
-        real_size = self.p.parse_size(data)
+            # Get the expected size of the packet.
+            M = self.p.parse_num_samples(data)
+            N = self.p.parse_num_beams(data)
+            dtype = self.p.parse_dtype(data)
+            _,step_size = self.p.dtype_map[dtype]
+            expected_size_bytes = 192 + M*N*step_size + 4*N
+            real_size = self.p.parse_size(data)
 
             # Keep looping until the full message is completely received.
-        #     while len(self.data_buffer) < expected_size_bytes:
-        #         try:
-        #             data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
-        #             self.data_buffer += data
-        #         except:
-        #             print("something went wrong in the msg reconstruction loop")
+            while len(self.data_buffer) < expected_size_bytes:
+                try:
+                    data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
+                    self.data_buffer += data
+                except:
+                    print("something went wrong in the msg reconstruction loop")
 
-        # except socket.timeout:
-        #     rospy.logerr("Command interface socket timed out, verify connection.")
-        #     return
-        self.data_buffer = data
+        except socket.timeout:
+            rospy.logerr("Command interface socket timed out, verify connection.")
+            return
+
         print("Final size of the concat msg={}".format(len(self.data_buffer)))
 
         # Get the pixel and beam directions arrays.
@@ -352,7 +353,10 @@ class FlsNode:
         image.encoding = 'mono8'  # TODO This should dynamically change
                                    # depending on the data's dtype...
         image.step = image.width * 1
-        image.data =  np.array(pixel_data, dtype='uint8').tolist()
+        # image.data =  np.array(pixel_data, dtype='uint8').tolist()
+        image.data = np.array(pixel_data)
+        image_max = np.max(image.data)
+        image.data = ((255/image_max) * image.data).astype('uint8').tolist()
         self.img_pub.publish(image)
 
         # Build the multi array.
@@ -367,46 +371,44 @@ class FlsNode:
         dir_dim.stride = dir_dim.size * 4
         array.layout.dim = [img_dim, dir_dim]
         array.data = np.array(pixel_data).astype(float).tolist() + directions
-        self.raw_pub.publish(array)
+        # self.raw_pub.publish(array)
 
-        # build the fls msg
-        flsmsg = Fls()
-        flsmsg.preamble = self.p.parse_preamble(self.data_buffer)
-        flsmsg.type = self.p.parse_type(self.data_buffer)
-        flsmsg.size = self.p.parse_size(self.data_buffer)
-        flsmsg.snd_velocity = self.p.parse_sound_velocity(self.data_buffer)        
-        flsmsg.sample_rate = self.p.parse_sample_rate(self.data_buffer)
-        flsmsg.num_beams = self.p.parse_num_beams(self.data_buffer)
-        flsmsg.num_samples = self.p.parse_num_samples(self.data_buffer)
-        flsmsg.Time = self.p.parse_timestamp(self.data_buffer)
-        flsmsg.dtype = self.p.parse_dtype(self.data_buffer)
-        flsmsg.t0 = self.p.parse_first_sample_num(self.data_buffer)
-        flsmsg.gain = self.p.parse_gain(self.data_buffer)
-        flsmsg.swath_dir = self.p.parse_swath_dir(self.data_buffer)
-        flsmsg.swath_open = self.p.parse_swath_open(self.data_buffer)
-        flsmsg.tx_freq = self.p.parce_tx_freq(self.data_buffer)
-        flsmsg.tx_bw = self.p.parse_tx_bw(self.data_buffer)
-        flsmsg.tx_len = self.p.parse_tx_len(self.data_buffer)
-        flsmsg.tx_amp = self.p.parse_tx_amp(self.data_buffer)
-        flsmsg.ping_rate = self.p.parse_ping_rate(self.data_buffer)
-        flsmsg.ping_number = self.p.parse_ping_num(self.data_buffer)
-        flsmsg.time_net = self.p.parse_time_net(self.data_buffer)
-        flsmsg.beams = self.p.parse_beams(self.data_buffer)
-        flsmsg.vga_t1 = self.p.vga_t1(self.data_buffer)
-        flsmsg.vga_g1 = self.p.vga_g1(self.data_buffer)
-        flsmsg.vga_t2 = self.p.vga_t2(self.data_buffer)
-        flsmsg.vga_g2 = self.p.vga_g2(self.data_buffer)
-        flsmsg.tx_angle = self.p.parse_tx_angle(self.data_buffer)
-        flsmsg.tx_voltage = self.p.parse_tx_voltage(self.data_buffer)
-        flsmsg.beam_dist_mode = self.p.parse_beam_dist_mode(self.data_buffer)
-        flsmsg.sonar_mode = self.p.parse_sonar_mode(self.data_buffer)
-        flsmsg.gate_tilt = self.p.parse_gate_tilt(self.data_buffer)
-        flsmsg.fls_image = image
-        flsmsg.fls_raw = array
-        self.data_pub.publish(flsmsg)
+        # build the WaterColumn msg
+        msg = WaterColumn()
+        msg.preamble = self.p.parse_preamble(self.data_buffer)
+        msg.type = self.p.parse_type(self.data_buffer)
+        msg.size = self.p.parse_size(self.data_buffer)
+        msg.snd_velocity = self.p.parse_sound_velocity(self.data_buffer)        
+        msg.sample_rate = self.p.parse_sample_rate(self.data_buffer)
+        msg.num_beams = self.p.parse_num_beams(self.data_buffer)
+        msg.num_samples = self.p.parse_num_samples(self.data_buffer)
+        msg.Time = self.p.parse_timestamp(self.data_buffer)
+        msg.dtype = self.p.parse_dtype(self.data_buffer)
+        msg.t0 = self.p.parse_first_sample_num(self.data_buffer)
+        msg.gain = self.p.parse_gain(self.data_buffer)
+        msg.swath_dir = self.p.parse_swath_dir(self.data_buffer)
+        msg.swath_open = self.p.parse_swath_open(self.data_buffer)
+        msg.tx_freq = self.p.parce_tx_freq(self.data_buffer)
+        msg.tx_bw = self.p.parse_tx_bw(self.data_buffer)
+        msg.tx_len = self.p.parse_tx_len(self.data_buffer)
+        msg.tx_amp = self.p.parse_tx_amp(self.data_buffer)
+        msg.ping_rate = self.p.parse_ping_rate(self.data_buffer)
+        msg.ping_number = self.p.parse_ping_num(self.data_buffer)
+        msg.time_net = self.p.parse_time_net(self.data_buffer)
+        msg.beams = self.p.parse_beams(self.data_buffer)
+        msg.vga_t1 = self.p.vga_t1(self.data_buffer)
+        msg.vga_g1 = self.p.vga_g1(self.data_buffer)
+        msg.vga_t2 = self.p.vga_t2(self.data_buffer)
+        msg.vga_g2 = self.p.vga_g2(self.data_buffer)
+        msg.tx_angle = self.p.parse_tx_angle(self.data_buffer)
+        msg.tx_voltage = self.p.parse_tx_voltage(self.data_buffer)
+        msg.beam_dist_mode = self.p.parse_beam_dist_mode(self.data_buffer)
+        msg.sonar_mode = self.p.parse_sonar_mode(self.data_buffer)
+        msg.gate_tilt = self.p.parse_gate_tilt(self.data_buffer)
+        msg.watercolumn_raw = array
+        self.data_pub.publish(msg)
         # Reset the data buffer.
         self.data_buffer = b''
-
 
 
 
@@ -416,20 +418,14 @@ def main():
     """
     Main method for the ROS node.
     """
-    rospy.init_node('fls_parser')
-    rospy.loginfo("Starting the FLS parsing node...")
-    fls = FlsNode()
-    
+    rospy.init_node('wbms_parser')
+    rospy.loginfo("Starting the WBMS sonar parsing node...")
+    wbms = WbmsNode()
+
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
-        with open ("/home/raytoningu/od/src/norbit_fls_driver/data/fls_tcp_400khz_100m.bin", "rb") as myfile:
-            chunk1 = myfile.read(16)
-            size = fls.p.parse_size(chunk1)
-
-            chunk2=myfile.read(fls.p.parse_size(myfile.read(16)))
-            chunk = chunk1 + chunk2
-            fls.parse_and_publish(chunk)
-            rate.sleep()
+        wbms.parse_and_publish()
+        rate.sleep()
 
 if __name__ == "__main__":
     main()

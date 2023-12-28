@@ -6,7 +6,7 @@ import math
 from sensor_msgs.msg import Image
 import numpy as np
 import cv2
-from norbit_fls_driver.msg import Fls
+from norbit_wbms_driver.msg import WaterColumn
 
 
 def data_callback(msg):
@@ -16,7 +16,7 @@ def data_callback(msg):
     aperture = msg.swath_open
     height = msg.num_samples
     width = msg.num_beams
-    imagearray = np.array(msg.fls_raw.data[:-width])
+    imagearray = np.array(msg.watercolumn_raw.data[:-width])
     imagearray = np.reshape(imagearray, (height,width))
 
     #filter data
@@ -61,7 +61,7 @@ def data_callback(msg):
     
 rospy.init_node('displayer')
 # sub_goal = rospy.Subscriber('/lolo/sim/fls/image', Image, image_callback)
-sub_parser = rospy.Subscriber('/fls/data', Fls, data_callback)
+sub_parser = rospy.Subscriber('/fls/data', WaterColumn, data_callback)
 pub = rospy.Publisher('/fls/display', Image, queue_size=1)
 beam_samples=650
 num_beams = 256

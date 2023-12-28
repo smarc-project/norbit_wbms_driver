@@ -7,20 +7,21 @@ import socket
 import rospy
 from std_msgs.msg import Float32
 from dynamic_reconfigure.server import Server
-from norbit_fls_driver.cfg import fls_paramsConfig 
-from norbit_fls_driver.msg import Configs
+from norbit_wbms_driver.cfg import wbms_paramsConfig 
+from norbit_wbms_driver.msg import Configs
 from rospy_message_converter import message_converter
 
 
 class CommandInterface:
     """
-    Class that handles the communication with the FLS.
+    Class that handles the communication with the Norbit sonar.
     """
 
-    # FLS's IP and port.
-    FLS_IP = "192.168.1.89"
+    # Sonar's IP and port.
+    sonar_IP = "192.168.53.53"
+    #sonar_IP = "192.168.1.89"
     # Water column data port.
-    FLS_PORT = 2209
+    sonar_PORT = 2209
 
     
 
@@ -28,13 +29,13 @@ class CommandInterface:
         self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while not rospy.is_shutdown():
             try:
-                self.tcp_sock.connect((self.FLS_IP, self.FLS_PORT))
-                rospy.loginfo("TCP socket successfully bound to: %s:%i", self.FLS_IP,
-                            self.FLS_PORT)
+                self.tcp_sock.connect((self.sonar_IP, self.sonar_PORT))
+                rospy.loginfo("TCP socket successfully bound to: %s:%i", self.sonar_IP,
+                            self.sonar_PORT)
                 break
             except:
                 rospy.logerr("Failed to bind socket to %s:%s. Check ethernet configuration \
-                            and restart the node.", self.FLS_IP, self.FLS_PORT)
+                            and restart the node.", self.sonar_IP, self.sonar_PORT)
                 rospy.sleep(1)
                 #raise
 
@@ -42,8 +43,8 @@ class CommandInterface:
         self.tcp_sock.settimeout(2)
         self.initializing = True
         self.cycling = False
-        self.original_config = fls_paramsConfig.defaults.copy()
-        self.config_server = Server(fls_paramsConfig, self.dynamic_callback)
+        self.original_config = wbms_paramsConfig.defaults.copy()
+        self.config_server = Server(wbms_paramsConfig, self.dynamic_callback)
         self.config_sub = rospy.Subscriber('configs', Configs, self.cycle_callback)
         
        
@@ -164,13 +165,13 @@ def main():
     """
     Main method for the ROS node.
     """
-    rospy.init_node('fls_command_interface')
+    rospy.init_node('wbms_command_interface')
     rospy.loginfo("Starting the FLS parsing node...")
     passinglist =["set_range_min", "set_range_max", "set_range_R0","set_range_R1", "set_depth_D0", "set_depth_D1", "set_horizontal_resolution", "set_tx_Bandwidth", "set_tx_amp", "set_tx_pulse_length"] 
-    fls_comms = CommandInterface()
-    conf = fls_paramsConfig.defaults.copy()
-    fls_comms.send_whole_config(conf)  
-    fls_comms.initializing = False
+    comms = CommandInterface()
+    conf = wbms_paramsConfig.defaults.copy()
+    comms.send_whole_config(conf)  
+    comms.initializing = False
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         rate.sleep()

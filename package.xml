@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>norbit_fls_driver</name>
+  <name>norbit_wbms_driver</name>
   <version>0.0.0</version>
-  <description>The norbit_fls_driver package</description>
+  <description>The norbit_wbms_driver package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
