@@ -54,6 +54,8 @@ add_message_files(
   FILES
   WaterColumn.msg
   Configs.msg
+  Bathymetry.msg
+  Bathymetry_beam.msg
 )
 
 ## Generate services in the 'srv' folder
