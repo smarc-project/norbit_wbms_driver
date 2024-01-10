@@ -21,24 +21,26 @@ print("Connecting to " + config["sonar"]['ip'] + " " + config['sonar']['port'])
 try:
     tcp_socket.connect((config['sonar']['ip'], int(config['sonar']['port'])))
     print("TCP successfully connected.")
+    print("Sonar welcome message: " + str(tcp_socket.recv(1024)))
 except:
     print("Failed to bind socket.")
 
 def send(msg: str):
     msg = msg + "\n\r"
     tcp_socket.send(msg.encode())
-    print("Sent: " + msg.encode())
-    print("Reply: " + tcp_socket.recv(1024))
+    print("Sent: " + msg[:-2])
+    print("Reply: " + str(tcp_socket.recv(1024), 'utf-8')[:-2])
 
 
 # Operational Modes
 print('Setting sonar modes')
 sonar = config['sonar']
 modes = config['mode.operation_modes']
+sidescanModes = config['mode.sidescan_modes']
 flipmodes = config['mode.flip_modes']
 gatemodes = config['mode.gate_modes']
 send('set_mode ' + modes.get(sonar['mode']))
-send('set_sidescan_mode ' + sonar['sidescanMode']))
+send('set_sidescan_mode ' + sidescanModes.get(sonar['sidescanMode']))
 send('set_flip ' + flipmodes.get(sonar['flipMode']))
 send('set_gate_mode ' + gatemodes.get(sonar['gateMode']))
 send('set_gate_tilt ' + sonar['gateTilt'])
@@ -64,7 +66,7 @@ send('set_mf_decimation ' + swath['mfDecimation']) # TODO: Really good idea to s
 
 # Transmission Configuration
 print('Setting transmission pulse parameters')
-triggerModes = config['mode.triger_modes']
+triggerModes = config['mode.trigger_modes']
 tx = config['tx']
 send('set_tx ' + 
      tx['frequency'] + ' ' + 
@@ -83,11 +85,9 @@ send('set_trigger_mode ' + triggerModes.get(tx['triggerMode']))
 print("Setting environment parameters")
 environment = config['environment']
 timeSources = config['mode.time_source_modes']
-send('set_sound_velocity ' + environment['soundVelocity'])
+send('sound_velocity ' + environment['soundVelocity'])
 send('set_time_source ' + timeSources.get(environment['timeSource']))
 send('set_ntp_server ' + environment['ntpServer'])
-
-tcp_socket.re
 
 tcp_socket.close()
 
