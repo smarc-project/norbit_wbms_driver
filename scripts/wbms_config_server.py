@@ -22,30 +22,30 @@ def send_configuration(req: norbit_wbms_driver.srv.WbmsConfigureRequest):
     cfg2 = rosparam.get_param(rospy.get_name() + '/cfg2')
     cfg3 = rosparam.get_param(rospy.get_name() + '/cfg3')
     cfg4 = rosparam.get_param(rospy.get_name() + '/cfg4')
-
     ip = rosparam.get_param(rospy.get_name() + '/ip')
     port = rosparam.get_param(rospy.get_name() + '/port')
 
-    print("Setting configuration: " + str(req.ConfigRequest))
+    rospy.loginfo("Setting WBMS cfg: " + str(req.ConfigRequest))
+
+    rsp = 99
 
     if req.ConfigRequest == 0:
         print("Turning off sonar.")
-        wbms_configure.send_configuration("", ip, port)
+        rsp = wbms_configure.send_configuration("", ip, port)
     if req.ConfigRequest == 1:
         print("Setting conf file: " + cfg_dir + cfg1)
-        wbms_configure.send_configuration(cfg_dir + cfg1, ip, port)
+        rsp = wbms_configure.send_configuration(cfg_dir + cfg1, ip, port)
     elif req.ConfigRequest == 2:
         print("Setting conf file: " + cfg_dir + cfg2)
-        wbms_configure.send_configuration(cfg_dir + cfg2, ip, port)
+        rsp = wbms_configure.send_configuration(cfg_dir + cfg2, ip, port)
     elif req.ConfigRequest == 3:
         print("Setting conf file: " + cfg_dir + cfg3)
-        wbms_configure.send_configuration(cfg_dir + cfg3, ip, port)
+        rsp = wbms_configure.send_configuration(cfg_dir + cfg3, ip, port)
     elif req.ConfigRequest == 4:
         print("Setting conf file: " + cfg_dir + cfg4)
-        wbms_configure.send_configuration(cfg_dir + cfg4, ip, port)
+        rsp = wbms_configure.send_configuration(cfg_dir + cfg4, ip, port)
 
-
-    return norbit_wbms_driver.srv.WbmsConfigureResponse(str(-1))
+    return norbit_wbms_driver.srv.WbmsConfigureResponse(str(rsp))
 
 def main():
     print("Configure service started")

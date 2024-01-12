@@ -32,6 +32,7 @@ def send_configuration(inifile: str, ip: str, port: str):
         print("Sonar welcome message: \n" + str(tcp_socket.recv(1024), 'utf-8'))
     except:
         print("Failed to bind socket.")
+        return -1
 
     def send(msg: str):
         msg = msg + "\n\r"
@@ -44,7 +45,7 @@ def send_configuration(inifile: str, ip: str, port: str):
     if inifile == "":
         send('set_power 0')
         send('exit')
-        return
+        return 0
 
     # Operational Modes
     print('Setting sonar modes')
@@ -107,6 +108,8 @@ def send_configuration(inifile: str, ip: str, port: str):
     send('set_power 1')
     send('exit')
     tcp_socket.close()
+
+    return 1
 
 
 
