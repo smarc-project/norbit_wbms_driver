@@ -17,25 +17,32 @@ long_range_cfg = ""
 # TODO: Make a class and move the code from wbms_configure.py into it
 
 def send_configuration(req: norbit_wbms_driver.srv.WbmsConfigureRequest):
-    cfg_dir = rosparam.get_param('wbms/cfg_dir')
-    default_cfg = rosparam.get_param('wbms/default_conf_file')
-    short_range_cfg = rosparam.get_param('wbms/short_range_conf_file')
-    medium_range_cfg = rosparam.get_param('wbms/medium_range_conf_file')
-    long_range_cfg = rosparam.get_param('wbms/long_range_conf_file')
+    cfg_dir = rosparam.get_param(rospy.get_name() + '/cfg_dir')
+    cfg1 = rosparam.get_param(rospy.get_name() + '/cfg1')
+    cfg2 = rosparam.get_param(rospy.get_name() + '/cfg2')
+    cfg3 = rosparam.get_param(rospy.get_name() + '/cfg3')
+    cfg4 = rosparam.get_param(rospy.get_name() + '/cfg4')
+
+    ip = rosparam.get_param(rospy.get_name() + '/ip')
+    port = rosparam.get_param(rospy.get_name() + '/port')
 
     print("Setting configuration: " + str(req.ConfigRequest))
+
+    if req.ConfigRequest == 0:
+        print("Turning off sonar.")
+        wbms_configure.send_configuration("", ip, port)
     if req.ConfigRequest == 1:
-        print("Setting conf file: " + cfg_dir + default_cfg)
-        wbms_configure.send_configuration(cfg_dir + default_cfg)
+        print("Setting conf file: " + cfg_dir + cfg1)
+        wbms_configure.send_configuration(cfg_dir + cfg1, ip, port)
     elif req.ConfigRequest == 2:
-        print("Setting conf file: " + cfg_dir + short_range_cfg)
-        wbms_configure.send_configuration(cfg_dir + short_range_cfg)
+        print("Setting conf file: " + cfg_dir + cfg2)
+        wbms_configure.send_configuration(cfg_dir + cfg2, ip, port)
     elif req.ConfigRequest == 3:
-        print("Setting conf file: " + cfg_dir + medium_range_cfg)
-        wbms_configure.send_configuration(cfg_dir + medium_range_cfg)
+        print("Setting conf file: " + cfg_dir + cfg3)
+        wbms_configure.send_configuration(cfg_dir + cfg3, ip, port)
     elif req.ConfigRequest == 4:
-        print("Setting conf file: " + cfg_dir + long_range_cfg)
-        wbms_configure.send_configuration(cfg_dir + long_range_cfg)
+        print("Setting conf file: " + cfg_dir + cfg4)
+        wbms_configure.send_configuration(cfg_dir + cfg4, ip, port)
 
 
     return norbit_wbms_driver.srv.WbmsConfigureResponse(str(-1))

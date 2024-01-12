@@ -1,18 +1,23 @@
 <launch>
     <!--Launch file for the node. Runs the main node + rqt reconfig server.-->
   
-    <param name="wbms/sonar_ip" type="str" value="192.168.53.53" />
-    <param name="wbms/command_interface_port" type="str" value="2209" />
+    <arg name="ip" default="192.168.53.53" />
 
-    <param name="wbms/cfg_dir" value="$(find norbit_wbms_driver)/cfg/"/>
-    <param name="wbms/default_conf_file" value="wbms_default.ini" />
-    <param name="wbms/short_range_conf_file" value="wbms_short_range.ini" />
-    <param name="wbms/medium_range_conf_file" value="wbms_medium_range.ini" />
-    <param name="wbms/long_range_conf_file" value="wbms_long_range.ini" />
+    <arg name="cfg_dir" default="$(find norbit_wbms_driver)/cfg/" />
+    <arg name="wbms_cfg1" default="wbms_default.ini" />
+    <arg name="wbms_cfg2" default="wbms_short_range.ini" />
+    <arg name="wbms_cfg3" default="wbms_medium_range.ini" />
+    <arg name="wbms_cfg4" default="wbms_long_range.ini" />
 
-    <param name="poop" type="string" value="pee"/>
-
-    <node pkg="norbit_wbms_driver" type="wbms_config_server.py" name="config_server" output="screen"/>
+    <node pkg="norbit_wbms_driver" type="wbms_config_server.py" name="config_server" output="screen">
+      <param name="port" value="2209" type="string" />
+      <param name="ip" value="$(arg ip)" />
+      <param name="cfg_dir" value="$(arg cfg_dir)" />
+      <param name="cfg1" value="$(arg wbms_cfg1)" />
+      <param name="cfg2" value="$(arg wbms_cfg2)" />
+      <param name="cfg3" value="$(arg wbms_cfg3)" />
+      <param name="cfg4" value="$(arg wbms_cfg4)" />
+    </node>
 
 	<!--RQT Dynamic Reconfigure GUI-->
   <!--<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="dynamic_reconfigure_gui" output="screen"/>-->

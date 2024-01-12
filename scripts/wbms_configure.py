@@ -5,7 +5,13 @@ import os
 
 # Read configuration file and send to Norbit sonar.
 # Finally starts the sonar pinging. 
-def send_configuration(inifile):
+def send_configuration(inifile: str, ip: str, port: str):
+    """ 
+    Parse an ini file and configure the sonar. 
+    ini file: absolute file path
+    ip: string
+    port: string
+    """
     #dir_path = os.path.dirname(os.path.realpath(__file__))
     #print("Current working directory: " + os.getcwd())
     print("Loading config file: " + str(inifile))
@@ -18,10 +24,10 @@ def send_configuration(inifile):
 
     tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_socket.settimeout(2)
-    print("Connecting to " + config["sonar"]['ip'] + " " + config['sonar']['port'])
+    print("Connecting to " + ip + " " + port)
 
     try:
-        tcp_socket.connect((config['sonar']['ip'], int(config['sonar']['port'])))
+        tcp_socket.connect((ip, int(port)))
         print("TCP successfully connected.")
         print("Sonar welcome message: \n" + str(tcp_socket.recv(1024), 'utf-8'))
     except:
@@ -33,6 +39,12 @@ def send_configuration(inifile):
         print("Sent: " + msg[:-2])
         print("Reply: " + str(tcp_socket.recv(1024), 'utf-8')[:-2])
 
+
+    # Turn off sonar if string is empty
+    if inifile == "":
+        send('set_power 0')
+        send('exit')
+        return
 
     # Operational Modes
     print('Setting sonar modes')
