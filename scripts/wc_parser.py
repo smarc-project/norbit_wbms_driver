@@ -10,6 +10,8 @@ import numpy as np
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 from norbit_wbms_driver.msg import WaterColumn
+import rosparam
+
 __author__ = "Aldo Teran"
 __author_email = "aldot@kth.se"
 __license__ = "MIT"
@@ -265,25 +267,19 @@ class WbmsNode:
     Class to handle the HEX parsing from an norbit sonar's data stream.
     """
 
-    # sonar's IP and port.
-    #sonar_IP = "192.168.1.89"
-    sonar_IP = rospy.get_param(rospy.get_name() + '/wbms_sonar_ip')
-    # Water column data port.
-    sonar_PORT = rospy.get_param(rospy.get_name() + '/wbms_watercolumn_data_port')
-
     BUFFER_SIZE_BYTES = 512000
 
-    def __init__(self):
+    def __init__(self, ip, port):
         self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         while not rospy.is_shutdown():
             try:
-                self.tcp_sock.connect((self.sonar_IP, self.sonar_PORT))
-                rospy.loginfo("TCP socket successfully bound to: %s:%i", self.sonar_IP,
-                            self.sonar_PORT)
+                self.tcp_sock.connect((ip, port))
+                rospy.loginfo("TCP socket successfully bound to: %s:%i", ip,
+                            port)
                 break
             except:
                 rospy.logerr("Failed to bind socket to %s:%s. Check ethernet configuration \
-                            and restart the node.", self.sonar_IP, self.sonar_PORT)
+                            and restart the node.", ip, port)
                 rospy.sleep(1)
                 #raise
 
@@ -297,11 +293,11 @@ class WbmsNode:
         self.data_buffer = b''
 
         # Setup our raw array publisher and the image publisher.
-        self.img_pub = rospy.Publisher("fls/image",
+        self.img_pub = rospy.Publisher("wbms/watercolumn/image",
                                        Image, queue_size=1)
-        self.raw_pub = rospy.Publisher("fls/raw",
+        self.raw_pub = rospy.Publisher("wbms/watercolumn/raw",
                                        Float32MultiArray, queue_size=1)
-        self.data_pub = rospy.Publisher("fls/data", WaterColumn, queue_size=1)
+        self.data_pub = rospy.Publisher("wbms/watercolumn/data", WaterColumn, queue_size=1)
 
 
     def parse_and_publish(self):
@@ -418,9 +414,15 @@ def main():
     """
     Main method for the ROS node.
     """
-    rospy.init_node('wbms_parser')
-    rospy.loginfo("Starting the WBMS sonar parsing node...")
-    wbms = WbmsNode()
+    rospy.init_node('wc_parser')
+    rospy.loginfo("Starting the WBMS water column parsing node...")
+    
+    # sonar's IP and port.
+    sonar_IP = rosparam.get_param(rospy.get_name() + '/wbms_sonar_ip')
+    # Water column data port.
+    sonar_PORT = rosparam.get_param(rospy.get_name() + '/wbms_watercolumn_data_port')
+    
+    wbms = WbmsNode(sonar_IP, sonar_PORT)
 
     rate = rospy.Rate(10)
     while not rospy.is_shutdown():

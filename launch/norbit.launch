@@ -7,15 +7,15 @@
     <!-- <arg name="wbms_snippet_data_port" default="2212" /> -->
     <!-- <arg name="wbms_command_interface_port" default="2209" /> -->
 
-    <node pkg="lolo_norbit_wbms_driver" type="bathymetry_parser.py" name="bathymetry_parser" output="screen">
+    <node pkg="norbit_wbms_driver" type="bathymetry_parser.py" name="bathymetry_parser" output="screen">
       <param name="wbms_sonar_ip" value="$(arg wbms_sonar_ip)" />
       <param name="wbms_bathymetry_data_port" value="$(arg wbms_bathymetry_data_port)" />
     </node>
-    <node pkg="lolo_norbit_wbms_driver" type="wc_parser.py" name="wc_parser" output="screen">
+    <node pkg="norbit_wbms_driver" type="wc_parser.py" name="wc_parser" output="screen">
       <param name="wbms_sonar_ip" value="$(arg wbms_sonar_ip)" />
       <param name="wbms_watercolumn_data_port" value="$(arg wbms_watercolumn_data_port)" />
     </node>
-    <node pkg="lolo_norbit_wbms_driver" type="bathymetry_to_laser_scan.py" name="bathymetry_to_laserscan" output="screen">
+    <node pkg="norbit_wbms_driver" type="bathymetry_to_laser_scan.py" name="bathymetry_to_laserscan" output="screen">
     </node>
 
 </launch>
