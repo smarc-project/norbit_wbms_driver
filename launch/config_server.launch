@@ -1,7 +1,7 @@
 <launch>
     <!--Launch file for the node. Runs the main node + rqt reconfig server.-->
   
-    <arg name="ip" default="192.168.53.53" />
+    <arg name="ip" default="192.168.1.53" />
 
     <arg name="cfg_dir" default="$(find norbit_wbms_driver)/cfg/" />
     <arg name="wbms_cfg1" default="wbms_default.ini" />
