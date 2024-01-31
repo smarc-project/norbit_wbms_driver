@@ -20,7 +20,7 @@ __author_email = "aldot@kth.se"
 __license__ = "MIT"
 __status__ = "Development"
 
-
+SOCKET_TIMEOUT = 5
 
 class BathymetryParser:
     """
@@ -223,7 +223,7 @@ class BathymetryNode:
                 #raise
 
         # Set a timout for the socket.
-        self.tcp_sock.settimeout(2)
+        self.tcp_sock.settimeout(SOCKET_TIMEOUT)
 
         # Build our parser.
         self.p = BathymetryParser()
