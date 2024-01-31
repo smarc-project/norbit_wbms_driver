@@ -268,7 +268,7 @@ class BathymetryNode:
                     print("something went wrong in the msg reconstruction loop")
 
         except socket.timeout:
-            rospy.logerr("Command interface socket timed out, verify connection.")
+            rospy.logerr("Bathymetry interface socket timed out, verify connection.")
             return
 
         print("Final size of the concat msg={}".format(len(self.data_buffer)))
