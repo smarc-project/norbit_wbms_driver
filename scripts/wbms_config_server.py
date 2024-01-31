@@ -54,6 +54,11 @@ def main():
     
     rospy.init_node('wbms_configure_server')
     configServ = rospy.Service('/wbms_configure', norbit_wbms_driver.srv.WbmsConfigure, send_configuration)
+
+    print("Turning off sonar.")
+    ip = rosparam.get_param(rospy.get_name() + '/ip')
+    port = rosparam.get_param(rospy.get_name() + '/port')
+    rsp = wbms_configure.send_configuration("", ip, port)
     rospy.spin()
 
 if __name__ == "__main__":
