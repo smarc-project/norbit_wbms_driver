@@ -14,7 +14,7 @@ def bathymetry_to_laser_scan(in_msg: Bathymetry):
     out_msg.angle_max = in_msg.swath_dir + in_msg.swath_open/2
     
     out_msg.header.stamp = rospy.Time.now()
-    out_msg.header.frame_id = "laserscan_link"
+    out_msg.header.frame_id = "lolo/mbes_link"
     
     out_msg.angle_increment = in_msg.swath_open / in_msg.num_beams
     out_msg.time_increment = 0

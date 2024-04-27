@@ -6,6 +6,7 @@ import struct
 import socket
 import rospy
 import numpy as np
+import math
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray, MultiArrayDimension
@@ -176,6 +177,8 @@ class BathymetryParser:
         N = self.parse_num_beams(msg)
         sv = self.parse_sound_velocity(msg)
         sr = self.parse_sample_rate(msg)
+
+        if math.isnan(sv): sv = 1500
 
         for n in range(1, N):
             sample_num = struct.unpack('<I', msg[92+n*20:96+n*20])[0] 

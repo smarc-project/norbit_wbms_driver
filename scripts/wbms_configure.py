@@ -51,6 +51,7 @@ def send_configuration(inifile: str, ip: str, port: str):
     print('Setting sonar modes')
     sonar = config['sonar']
     modes = config['mode.operation_modes']
+    print("sonar config: "+ str(sonar))
     sidescanModes = config['mode.sidescan_modes']
     flipmodes = config['mode.flip_modes']
     gatemodes = config['mode.gate_modes']
