@@ -235,7 +235,7 @@ class BathymetryNode:
         self.data_buffer = b''
 
         # Setup publisher.
-        self.bathymetry_pub = rospy.Publisher("wbms/bathymetry",
+        self.bathymetry_pub = rospy.Publisher("bathymetry",
                                        Bathymetry, 
                                        queue_size=1)
 

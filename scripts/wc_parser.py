@@ -294,11 +294,11 @@ class WbmsNode:
         self.data_buffer = b''
 
         # Setup our raw array publisher and the image publisher.
-        self.img_pub = rospy.Publisher("wbms/watercolumn/image",
+        self.img_pub = rospy.Publisher("wc/image",
                                        Image, queue_size=1)
-        self.raw_pub = rospy.Publisher("wbms/watercolumn/raw",
-                                       Float32MultiArray, queue_size=1)
-        self.data_pub = rospy.Publisher("wbms/watercolumn/data", WaterColumn, queue_size=1)
+        #self.raw_pub = rospy.Publisher("wc/raw",
+        #                               Float32MultiArray, queue_size=1)
+        self.data_pub = rospy.Publisher("wc/data", WaterColumn, queue_size=1)
 
 
     def parse_and_publish(self):

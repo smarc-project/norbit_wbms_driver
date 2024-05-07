@@ -34,7 +34,8 @@ def data_callback(msg):
     not_covered = 360 - aperture
     step = aperture / width
     toadd = int(not_covered / step)
-    offset = 190
+    offset = 90# fls
+    #offset = 20# mbes
     imagearray = np.concatenate((np.zeros((height, offset)), imagearray[:,0:], np.zeros((height, toadd-offset))), axis=1)
 
     #Convert to cv2 image
@@ -60,9 +61,9 @@ def data_callback(msg):
     pub.publish(final)
     
 rospy.init_node('displayer')
-# sub_goal = rospy.Subscriber('/lolo/sim/fls/image', Image, image_callback)
-sub_parser = rospy.Subscriber('/fls/data', WaterColumn, data_callback)
-pub = rospy.Publisher('/fls/display', Image, queue_size=1)
+sub_parser = rospy.Subscriber('/lolo/sensors/fls/wc/data', WaterColumn, data_callback)
+#sub_parser = rospy.Subscriber('/mbes/wbms/watercolumn/data', WaterColumn, data_callback)
+pub = rospy.Publisher('/display', Image, queue_size=1)
 beam_samples=650
 num_beams = 256
 

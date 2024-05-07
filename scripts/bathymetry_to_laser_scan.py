@@ -42,12 +42,12 @@ def bathymetry_to_laser_scan(in_msg: Bathymetry):
 if __name__ == "__main__":
     rospy.init_node("bathymetry_to_laser_scan")
 
-    bathymetry_sub = rospy.Subscriber("wbms/bathymetry", 
+    bathymetry_sub = rospy.Subscriber("bathymetry", 
                                       Bathymetry, 
                                       bathymetry_to_laser_scan, 
                                       queue_size=1)      
         
-    laser_scan_pub = rospy.Publisher("wbms/laser_scan_bathymetry", LaserScan, queue_size=1)
+    laser_scan_pub = rospy.Publisher("laser_scan_bathymetry", LaserScan, queue_size=1)
 
     while not rospy.is_shutdown():
         rospy.spin()
