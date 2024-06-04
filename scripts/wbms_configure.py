@@ -60,11 +60,11 @@ def send_configuration(inifile: str, ip: str, port: str):
     send('set_flip ' + flipmodes.get(sonar['flipMode']))
     send('set_gate_mode ' + gatemodes.get(sonar['gateMode']))
     send('set_gate_tilt ' + sonar['gateTilt'])
-    if sonar['mode'] == 'range':
+    if sonar['gateMode'] == 'range':
         send('set_range ' + config['range']['gate_mode_range'])
-    elif sonar['mode'] == 'depth':
+    elif sonar['gateMode'] == 'depth':
         send('set_range ' + config['range']['gate_mode_depth'])
-    elif sonar['mode'] == 'mixed':
+    elif sonar['gateMode'] == 'mixed':
         send('set_range ' + config['range']['gate_mode_range'] + ' ' + config['range']['gate_mode_depth'])
 
     autogateModes = config['mode.adaptive_gate_modes']
