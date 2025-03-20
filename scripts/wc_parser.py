@@ -342,6 +342,7 @@ class WbmsNode:
         pixel_data = self.p.parse_pixel_data(self.data_buffer)
         directions = self.p.parse_directions(self.data_buffer)
 
+        
         # Build the image.
         image = Image()
         image.header.stamp = rospy.Time.now()
@@ -354,7 +355,8 @@ class WbmsNode:
         image.data = np.array(pixel_data)
         image_max = np.max(image.data)
         image.data = ((255/image_max) * image.data).astype('uint8').tolist()
-        self.img_pub.publish(image)
+        self.img_pub.publish(image) 
+        
 
         # Build the multi array.
         array = Float32MultiArray()
@@ -368,7 +370,6 @@ class WbmsNode:
         dir_dim.stride = dir_dim.size * 4
         array.layout.dim = [img_dim, dir_dim]
         array.data = np.array(pixel_data).astype(float).tolist() + directions
-        # self.raw_pub.publish(array)
 
         # build the WaterColumn msg
         msg = WaterColumn()
