@@ -1,6 +1,10 @@
 import rclpy
 from rclpy.node import Node
-from rcl_interfaces.msg import ParameterDescriptor, ParameterType
+from rcl_interfaces.msg import SetParametersResult
+import socket
+import array
+
+import rclpy.parameter
 
 class WBMSDriverNode(Node):
     """
@@ -10,6 +14,9 @@ class WBMSDriverNode(Node):
     def __init__(self):
         super().__init__('wbms_driver')
         self.get_logger().info("Starting WBMS driver node.")
+        self.sonar_ip = '127.0.0.1' #TODO: modify in launch file
+        self.sonar_port = 2209
+
         self.declare_parameters(
             namespace='',
             parameters=[
@@ -41,6 +48,27 @@ class WBMSDriverNode(Node):
                 ('set_ntp_server', ''),
                 ('set_power', -1)
         ])
+        self.add_on_set_parameters_callback(self.send_parameters_update)
+
+
+    def send_parameters_update(self, params):
+        messages = []
+        for param in params:
+            if not isinstance(param.value, array.array):
+                messages.append(f'{param.name} {param.value}')
+            else:
+                values_str = [str(param.value[i]) for i in range(len(param.value))]
+                messages.append(f'{param.name} {" ".join(values_str)}')
+
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((self.sonar_ip, self.sonar_port))
+            for m in messages:
+                self.get_logger().info(f'Sending message: {m}')
+                s.send(m.encode())
+                reply = str(s.recv(1024).decode('utf-8'))
+                self.get_logger().info(f'Received: {reply}')
+
+        return SetParametersResult(successful=True)
 
 def main(args=None):
     rclpy.init(args=args)
