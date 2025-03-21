@@ -1,0 +1,54 @@
+/wbms_driver:
+  ros__parameters:
+    ##########################################
+    # SONAR SETTINGS
+    ##########################################
+    # operation modes:
+    # 0=forward, 1=bathy, 2=bathy amp, 4=BF pass-through,
+    # 5=edge enhance, 6=super res, 7=multi detect
+    set_mode: 1
+    set_sidescan_mode: 0 # 0=snippets, 1=sidescan, 9=cropped sidescan
+    set_flip: 1 # sonar projector: 0=FLS (upwards), 1=bathy (towards stern)
+    set_gate_mode: 1 # 0=gate by range, 1=gate by depth, 2=gate by range&depth
+    set_gate_tilt: 0 # [deg] [-45, 45]
+    set_autogate_preset: 2 # 0=off, 1=wide, 2=normal, 3=narrow
+    ##########################################
+    # RANGE
+    ##########################################
+    # if set_gate_mode=0/1: set_range=[start, stop] range/depth
+    # if set_gate_mode=2: set_range=[start_range, stop_range, min_depth, max_depth]
+    set_range: [5, 800] # [m]
+    ##########################################
+    # SWATH
+    ##########################################
+    set_direction: 0 # [deg] [-90, 90]
+    set_opening_angle: 140 # [deg] [0, 360]
+    set_resolution: [2048, 512] # [VRES 64-2048, HRES 64-512], water column resolution
+    set_mf_decimation: 1 # [1, 16], decimation factor before matched filter, enables longer pulses by reducing sample rate
+    ##########################################
+    # TX
+    ##########################################
+    # set_tx for MBES: [frequency, bandwidth, amplitude, length]
+    # ranges: frequency [200, 700] kHz, bandwidth [0, 80] kHz,
+    #         amplitude [0, 15], length [10, 819] microseconds
+    set_tx: [200, 80, 15, 300]
+    set_gain: 0 # [0, 100] dB, fixed VGA gain. VGA ramp must be 0 for this to work
+    set_vga: 50 # VGA ramp in dB/100m
+    set_rate: 2 # [-1, 60] Hz, Max allowable ping rate, -1=auto
+    set_tp_rate: 1 # [-1, 60] Hz, water column output rate
+    set_snippet_rate: 1 # [-1, 60] Hz, snippet output rate
+    # trigger modes:
+    # 0=fixed rate, 1=fixed rate (time sync), 2=full range (max allowed by set range)
+    # 3=adaptive (max allowed by measured range), 4=external trigger (rising edge)
+    # 5=external trigger (falling edge)
+    set_trigger_mode: 4
+    ##########################################
+    # ENVIRONMENT
+    ##########################################
+    sound_velocity: -1 # sets fixed sound velocity (-1=use external probe on serial port)
+    # time sources:
+    # 0=IRIG-B 1=NTP 2=IRIG-B(inverted) 3=NTP+PPS(pos) 4=NTP+PPS(neg)
+    # 5=ZDA+PPS(pos), 6=ZDA+PPS(neg), 7=ZDA, 8=free run(time since boot)
+    set_time_source: 1
+    set_ntp_server: "192.168.1.91"
+    set_power: 1 # 0=off, 1=on
