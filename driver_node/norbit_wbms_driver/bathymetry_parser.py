@@ -260,7 +260,7 @@ class BathymetryNode(Node):
             data, addr = self.tcp_socket.recvfrom(self.BUFFER_SIZE_BYTES)
             # Quick check of the deadbeef.
             if self.p.parse_preamble(data) != 0xDEADBEEF:
-                self.get_lotter().error("Message did not pass the deadbeef check!")
+                self.get_logger().error("Message did not pass the deadbeef check!")
                 return
 
             self.data_buffer += data
