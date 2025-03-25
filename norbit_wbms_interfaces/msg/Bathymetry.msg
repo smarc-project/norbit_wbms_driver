@@ -27,4 +27,4 @@ float32 swath_open          # Opening angle of swath [rad]
 float32 gate_tilt           # Gate tilt [rad], for depth gates
 
 # Blue area
-norbit_wbms_driver/Bathymetry_beam[] beams
+norbit_wbms_interfaces/BathymetryBeam[] beams

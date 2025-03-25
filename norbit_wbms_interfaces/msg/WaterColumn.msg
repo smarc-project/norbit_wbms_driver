@@ -5,7 +5,7 @@ float32 snd_velocity
 float32 sample_rate 
 uint32 num_beams
 uint32 num_samples
-float64 Time
+float64 time
 uint32 dtype
 int32 t0
 float32 gain
