@@ -2,19 +2,14 @@
 """
 norbit data parser.
 """
+import rclpy
+from rclpy.node import Node
 import struct
 import socket
-import rospy
-import numpy as np
 import math
+import time
 
-from sensor_msgs.msg import Image
-from std_msgs.msg import Float32MultiArray, MultiArrayDimension
-from norbit_wbms_driver.msg import WaterColumn
-from norbit_wbms_driver.msg import Bathymetry
-from norbit_wbms_driver.msg import Bathymetry_beam
-from sensor_msgs.msg import LaserScan
-import rosparam
+from norbit_wbms_interfaces.msg import Bathymetry, BathymetryBeam
 
 __author__ = "Aldo Teran"
 __author_email = "aldot@kth.se"
@@ -190,7 +185,7 @@ class BathymetryParser:
             quality_flag = struct.unpack('<B', msg[110+n*20:111+n*20])[0]
             quality_value = struct.unpack('<B', msg[111+n*20:112+n*20])[0]
             range_ = sample_num*sv/(2*sr)
-            bathy_msg.beams.append(Bathymetry_beam(
+            bathy_msg.beams.append(BathymetryBeam(
                 sample_num,
                 angle,
                 upper_gate,
@@ -204,29 +199,23 @@ class BathymetryParser:
             
 
 
-class BathymetryNode:
+class BathymetryNode(Node):
     """
     Class to handle the HEX parsing from an norbit sonar's data stream.
+    Note that this node blocks until the TCP connection is established.
+    #TODO: test actual parsing with real data
     """
     BUFFER_SIZE_BYTES = 512000
 
-    def __init__(self, ip, port):
+    def __init__(self):
+        super().__init__('bathymetry_parser')
+        self.get_logger().info("Starting Bathymetry Node")
 
-        self.tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        while not rospy.is_shutdown():
-            try:
-                self.tcp_sock.connect((ip, port))
-                rospy.loginfo("TCP socket successfully bound to: %s:%i", ip,
-                            port)
-                break
-            except:
-                rospy.logerr("Failed to bind socket to %s:%s. Check ethernet configuration \
-                            and restart the node.", ip, port)
-                rospy.sleep(1)
-                #raise
+        self.sonar_ip = '127.0.0.1' #TODO: modify in launch file
+        self.bathy_port = 2210
 
-        # Set a timout for the socket.
-        self.tcp_sock.settimeout(SOCKET_TIMEOUT)
+        self.tcp_retry_every = 5 # seconds
+        self.tcp_socket = self.connect_to_sonar()
 
         # Build our parser.
         self.p = BathymetryParser()
@@ -235,22 +224,45 @@ class BathymetryNode:
         self.data_buffer = b''
 
         # Setup publisher.
-        self.bathymetry_pub = rospy.Publisher("bathymetry",
-                                       Bathymetry, 
-                                       queue_size=1)
+        self.bathymetry_pub = self.create_publisher(Bathymetry, 'bathymetry', 1)
+        self.bathymetry_pub_timer = self.create_timer(1, self.parse_and_publish)
+
+
+    def connect_to_sonar(self):
+        """
+        Connect to the sonar's IP and port and return the TCP socket.
+        Retry until connection is established.
+        """
+        connected = False
+
+        tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcp_socket.settimeout(SOCKET_TIMEOUT)
+        tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+        while not connected:
+            try:
+                tcp_socket.connect((self.sonar_ip, self.bathy_port))
+                self.get_logger().info(f"Connected to sonar at {self.sonar_ip}:{self.bathy_port}")
+                connected = True
+                return tcp_socket
+            except Exception as e:
+                self.get_logger().error(f"Error connecting to sonar at {self.sonar_ip}:{self.bathy_port}")
+                self.get_logger().error(str(e))
+                self.get_logger().info(f"Trying again in {self.tcp_retry_every} seconds...")
+                time.sleep(self.tcp_retry_every)
 
 
     def parse_and_publish(self):
         """
-        Parse and publish the data recived from the ICP socket.
+        Parse and publish the data recived from the TCP socket.
         """
         # Get data from udp socket
         try:
             # Fetch the initial chunk.
-            data, addr = self.tcp_sock.recvfrom(self.BUFFER_SIZE_BYTES)
+            data, addr = self.tcp_socket.recvfrom(self.BUFFER_SIZE_BYTES)
             # Quick check of the deadbeef.
             if self.p.parse_preamble(data) != 0xDEADBEEF:
-                rospy.logerr("Message did not pass the deadbeef check!")
+                self.get_logger().error("Message did not pass the deadbeef check!")
                 return
 
             self.data_buffer += data
@@ -271,7 +283,7 @@ class BathymetryNode:
                     print("something went wrong in the msg reconstruction loop")
 
         except socket.timeout:
-            rospy.logerr("Bathymetry interface socket timed out, verify connection.")
+            self.get_logger().error("Bathymetry interface socket timed out, verify connection.")
             return
 
         print("Final size of the concat msg={}".format(len(self.data_buffer)))
@@ -309,24 +321,16 @@ class BathymetryNode:
         self.data_buffer = b''
 
 
-def main():
+def main(args=None):
     """
     Main method for the ROS node.
     """
+    rclpy.init(args=args)
 
-    rospy.init_node('bathymetry_parser')
-    rospy.loginfo("Starting the WBMS bathymetry parsing node...")
-
-    # sonar's IP and port.
-    sonar_IP = rosparam.get_param(rospy.get_name() + '/wbms_sonar_ip')
-    # Bathymetry data port.
-    sonar_PORT = rosparam.get_param(rospy.get_name() + '/wbms_bathymetry_data_port')
-    wbms = BathymetryNode(sonar_IP, sonar_PORT)
-
-    rate = rospy.Rate(10)
-    while not rospy.is_shutdown():
-        wbms.parse_and_publish()
-        rate.sleep()
+    bathy_parser = BathymetryNode()
+    rclpy.spin(bathy_parser)
+    bathy_parser.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == "__main__":
     main()

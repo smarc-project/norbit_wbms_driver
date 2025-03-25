@@ -24,7 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'wbms_driver = norbit_wbms_driver.wbms_driver:main'
+            'wbms_driver = norbit_wbms_driver.wbms_driver:main',
+            'bathymetry_parser = norbit_wbms_driver.bathymetry_parser:main',
         ],
     },
 )

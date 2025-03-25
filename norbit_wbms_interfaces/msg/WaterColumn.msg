@@ -5,7 +5,7 @@ float32 snd_velocity
 float32 sample_rate 
 uint32 num_beams
 uint32 num_samples
-float64 Time
+float64 time
 uint32 dtype
 int32 t0
 float32 gain
@@ -28,4 +28,4 @@ float32 tx_voltage
 uint8 beam_dist_mode
 uint8 sonar_mode
 float32 gate_tilt
-std_msgs/Float32MultiArray watercolumn_raw
+float32[] watercolumn_raw
