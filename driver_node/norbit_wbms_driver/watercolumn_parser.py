@@ -317,30 +317,22 @@ class WaterColumnNode(Node):
 
 
     def parse_and_publish(self):
-        """
-        Parse and publish the data recived from the TCP socket.
-        #TODO: Fix bug: use data buffer correctly
-        # Cuurrently: if the TCP connection sends data faster than the
-        # parser can process it, the data will be lost, and the remaining
-        # partial messages will not pass the 0xDEADBEEF check.
-        """
         try:
-            # Fetch the initial chunk.
+            # Fetch the initial chunk and add it to the buffer.
             data, addr = self.tcp_socket.recvfrom(self.BUFFER_SIZE_BYTES)
+            self.data_buffer += data
+
             # Quick check of the deadbeef.
-            if self.p.parse_preamble(data) != 0xDEADBEEF:
+            if self.p.parse_preamble(self.data_buffer) != 0xDEADBEEF:
                 self.get_logger().error("Message did not pass the deadbeef check!")
                 return
 
-            self.data_buffer += data
-
             # Get the expected size of the packet.
-            M = self.p.parse_num_samples(data)
-            N = self.p.parse_num_beams(data)
-            dtype = self.p.parse_dtype(data)
+            M = self.p.parse_num_samples(self.data_buffer)
+            N = self.p.parse_num_beams(self.data_buffer)
+            dtype = self.p.parse_dtype(self.data_buffer)
             _,step_size = self.p.dtype_map[dtype]
             expected_size_bytes = 192 + M*N*step_size + 4*N
-            real_size = self.p.parse_size(data)
 
             # Keep looping until the full message is completely received.
             while len(self.data_buffer) < expected_size_bytes:
@@ -354,7 +346,9 @@ class WaterColumnNode(Node):
             self.get_logger().error("Watercolumn interface socket timed out, verify connection.")
             return
 
-        print("Final size of the concat msg={}".format(len(self.data_buffer)))
+        print(f'Received {len(data)} bytes from the TCP socket')
+        print(f'Stored {len(self.data_buffer)} bytes in data_buffer')
+        print(f'Expected size of the message: {expected_size_bytes} bytes')
 
         # build the WaterColumn msg
         msg = WaterColumn()
@@ -391,8 +385,8 @@ class WaterColumnNode(Node):
         msg.watercolumn_raw = self._build_watercolumn_raw_image()
         msg.watercolumn_beam_directions = self.p.parse_directions(self.data_buffer)
         self.watercolumn_pub.publish(msg)
-        # Reset the data buffer.
-        self.data_buffer = b''
+        # Consume the bytes that have been processed from the buffer.
+        self.data_buffer = self.data_buffer[expected_size_bytes:]
 
     def _build_watercolumn_raw_image(self):
         # TODO: dynamically change image dencoding and data scaling

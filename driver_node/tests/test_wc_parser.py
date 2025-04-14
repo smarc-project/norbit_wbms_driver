@@ -38,5 +38,5 @@ class TestWaterColumnParser():
             for i in range(0, self.total_size, self.msg_size):
                 print(f'sending bytes {i} to {i+self.msg_size}')
                 self.tcp_connection.sendall(data[i:i+self.msg_size])
-                time.sleep(1)
+                # time.sleep(1)
                 assert True
