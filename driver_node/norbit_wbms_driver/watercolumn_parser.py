@@ -352,7 +352,13 @@ class WaterColumnNode(Node):
         self.get_logger().info(f'Stored {len(self.data_buffer)} bytes in data_buffer')
         self.get_logger().info(f'Expected size of the message: {expected_size_bytes} bytes')
 
-        # build the WaterColumn msg
+        msg = self._build_watercolumn_message()
+        self.watercolumn_pub.publish(msg)
+        self.watercolumn_raw_image_pub.publish(msg.watercolumn_raw)
+        # Consume the bytes that have been processed from the buffer.
+        self.data_buffer = self.data_buffer[expected_size_bytes:]
+
+    def _build_watercolumn_message(self):
         msg = WaterColumn()
         msg.preamble = self.p.parse_preamble(self.data_buffer)
         msg.type = self.p.parse_type(self.data_buffer)
@@ -386,10 +392,7 @@ class WaterColumnNode(Node):
         msg.gate_tilt = self.p.parse_gate_tilt(self.data_buffer)
         msg.watercolumn_raw = self._build_watercolumn_raw_image()
         msg.watercolumn_beam_directions = self.p.parse_directions(self.data_buffer)
-        self.watercolumn_pub.publish(msg)
-        self.watercolumn_raw_image_pub.publish(msg.watercolumn_raw)
-        # Consume the bytes that have been processed from the buffer.
-        self.data_buffer = self.data_buffer[expected_size_bytes:]
+        return msg
 
     def _build_watercolumn_raw_image(self):
         # TODO: dynamically change image dencoding and data scaling
