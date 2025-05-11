@@ -51,4 +51,4 @@
     # 5=ZDA+PPS(pos), 6=ZDA+PPS(neg), 7=ZDA, 8=free run(time since boot)
     set_time_source: 1
     set_ntp_server: "192.168.1.91"
-    set_power: 1 # 0=off, 1=on
+    set_power: 0 # 0=off, 1=on
