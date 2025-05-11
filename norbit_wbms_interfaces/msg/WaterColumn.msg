@@ -28,4 +28,5 @@ float32 tx_voltage
 uint8 beam_dist_mode
 uint8 sonar_mode
 float32 gate_tilt
-float32[] watercolumn_raw
+sensor_msgs/Image watercolumn_raw
+float32[] watercolumn_beam_directions #radians, shape: float32*N
