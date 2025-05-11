@@ -12,7 +12,8 @@ class WBMSDriverNode(Node):
     def __init__(self):
         super().__init__('wbms_driver')
         self.get_logger().info("Starting WBMS driver node.")
-        self.sonar_ip = '127.0.0.1' #TODO: modify in launch file
+        # self.sonar_ip = '127.0.0.1' #TODO: modify in launch file
+        self.sonar_ip = '192.168.1.53' #TODO: modify in launch file
         self.sonar_port = 2209
 
         self.default_int_param = -1
@@ -249,6 +250,8 @@ class WBMSDriverNode(Node):
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((self.sonar_ip, self.sonar_port))
+            reply = str(s.recv(1024).decode('utf-8'))
+            self.get_logger().info(f'Received welcome message: {reply}')
             for m in messages:
                 self.get_logger().info(f'Sending message: {m}')
                 s.send(m.encode())
