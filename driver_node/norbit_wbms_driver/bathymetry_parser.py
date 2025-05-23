@@ -269,7 +269,7 @@ class BathymetryNode(Node):
             # Get the expected size of the packet.
             N = self.p.parse_num_beams(data)
 
-            expected_size_bytes = 111 + N*20 # TODO: Double check 111 or 112
+            expected_size_bytes = 112 + N*20
 
             real_size = self.p.parse_size(data)
 
