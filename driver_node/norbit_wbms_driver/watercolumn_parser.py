@@ -276,8 +276,8 @@ class WaterColumnNode(Node):
         super().__init__('wc_parser')
         self.get_logger().info("Starting the WBMS water column parser node...")
         
-        # self.sonar_ip = '127.0.0.1' #TODO: modify in launch file
-        self.sonar_ip = '192.168.1.53' #TODO: modify in launch file
+        self.declare_parameter("sonar_ip", '192.168.1.53') #modify in launch file
+        self.sonar_ip = self.get_parameter("sonar_ip").value 
         self.watercolumn_port = 2211
 
         self.tcp_retry_every = 5 # seconds
@@ -291,7 +291,7 @@ class WaterColumnNode(Node):
         self.data_buffer = b''
 
         self.watercolumn_pub = self.create_publisher(WaterColumn, 'watercolumn', 1)
-        self.watercolumn_pub_timer = self.create_timer(1, self.parse_and_publish)
+        self.watercolumn_pub_timer = self.create_timer(0.01, self.parse_and_publish)
         self.watercolumn_raw_image_pub = self.create_publisher(Image, 'watercolumn_raw_image', 1)
 
 

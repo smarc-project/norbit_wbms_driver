@@ -1,0 +1,16 @@
+<launch>
+    <group>
+        <node name="mbes_driver" pkg="norbit_wbms_driver" exec="wbms_driver" output="screen" >
+            <param name="sonar_ip" value="192.168.1.53" />
+        </node>
+
+        <node name="bathymetry_parser" pkg="norbit_wbms_driver" exec="bathymetry_parser" output="screen" >
+            <param name="sonar_ip" value="192.168.1.53" />
+        </node>
+
+        <node name="watercolumn_parser" pkg="norbit_wbms_driver" exec="watercolumn_parser" output="screen" >
+            <param name="sonar_ip" value="192.168.1.53" />
+        </node>
+
+    </group>
+</launch>

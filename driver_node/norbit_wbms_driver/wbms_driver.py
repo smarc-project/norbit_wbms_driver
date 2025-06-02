@@ -12,8 +12,9 @@ class WBMSDriverNode(Node):
     def __init__(self):
         super().__init__('wbms_driver')
         self.get_logger().info("Starting WBMS driver node.")
-        # self.sonar_ip = '127.0.0.1' #TODO: modify in launch file
-        self.sonar_ip = '192.168.1.53' #TODO: modify in launch file
+        
+        self.declare_parameter("sonar_ip", '192.168.1.53') #modify in launch file
+        self.sonar_ip = self.get_parameter("sonar_ip").value 
         self.sonar_port = 2209
 
         self.default_int_param = -1
@@ -27,7 +28,7 @@ class WBMSDriverNode(Node):
 
     def _declare_sonar_setting_params(self):
         self.declare_parameter(
-            name='set_mode', value=self.default_int_param,
+            name='set_mode', value=1,
             descriptor=ParameterDescriptor(
                 name='set_mode',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -35,7 +36,7 @@ class WBMSDriverNode(Node):
                             '5=edge enhance, 6=super res, 7=multi detect'),
         )
         self.declare_parameter(
-            name='set_sidescan_model', value=self.default_int_param,
+            name='set_sidescan_model', value=0,
             descriptor=ParameterDescriptor(
                 name='set_sidescan_mode',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -43,7 +44,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_flip', value=self.default_int_param,
+            name='set_flip', value=1,
             descriptor=ParameterDescriptor(
                 name='set_flip',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -52,7 +53,7 @@ class WBMSDriverNode(Node):
             ),
         )
         self.declare_parameter(
-            name='set_gate_mode', value=self.default_int_param,
+            name='set_gate_mode', value=0,
             descriptor=ParameterDescriptor(
                 name='set_gate_mode',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -61,7 +62,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_gate_tilt', value=self.default_int_param,
+            name='set_gate_tilt', value=0,
             descriptor=ParameterDescriptor(
                 name='set_gate_tilt',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -70,7 +71,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_autogate_preset', value=self.default_int_param,
+            name='set_autogate_preset', value=0,
             descriptor=ParameterDescriptor(
                 name='set_autogate_preset',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -81,7 +82,7 @@ class WBMSDriverNode(Node):
 
     def _declare_range_and_swath_params(self):
         self.declare_parameter(
-            name='set_range', value=self.default_array_param,
+            name='set_range', value=[0,20],
             descriptor=ParameterDescriptor(
                 name='set_range',
                 type=ParameterType.PARAMETER_INTEGER_ARRAY,
@@ -92,7 +93,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_direction', value=self.default_int_param,
+            name='set_direction', value=0,
             descriptor=ParameterDescriptor(
                 name='set_direction',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -101,7 +102,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_opening_angle', value=self.default_int_param,
+            name='set_opening_angle', value=90,
             descriptor=ParameterDescriptor(
                 name='set_opening_angle',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -110,7 +111,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_resolution', value=self.default_array_param,
+            name='set_resolution', value=[1024,512],
             descriptor=ParameterDescriptor(
                 name='set_resolution',
                 type=ParameterType.PARAMETER_INTEGER_ARRAY,
@@ -118,7 +119,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_mf_decimation', value=self.default_int_param,
+            name='set_mf_decimation', value=1,
             descriptor=ParameterDescriptor(
                 name='set_mf_decimation',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -129,7 +130,7 @@ class WBMSDriverNode(Node):
 
     def _declare_tx_params(self):
         self.declare_parameter(
-            name='set_tx', value=self.default_array_param,
+            name='set_tx', value=[200, 80, 5, 300],
             descriptor=ParameterDescriptor(
                 name='set_tx',
                 type=ParameterType.PARAMETER_INTEGER_ARRAY,
@@ -141,7 +142,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_gain', value=self.default_int_param,
+            name='set_gain', value=0,
             descriptor=ParameterDescriptor(
                 name='set_gain',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -150,7 +151,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_vga', value=self.default_int_param,
+            name='set_vga', value=50,
             descriptor=ParameterDescriptor(
                 name='set_gain',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -158,7 +159,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_rate', value=self.default_int_param,
+            name='set_rate', value=2,
             descriptor=ParameterDescriptor(
                 name='set_rate',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -167,7 +168,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_tp_rate', value=self.default_int_param,
+            name='set_tp_rate', value=2,
             descriptor=ParameterDescriptor(
                 name='set_tp_rate',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -176,7 +177,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_snippet_rate', value=self.default_int_param,
+            name='set_snippet_rate', value=1,
             descriptor=ParameterDescriptor(
                 name='set_snippet_rate',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -185,7 +186,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_trigger_mode', value=self.default_int_param,
+            name='set_trigger_mode', value=0,
             descriptor=ParameterDescriptor(
                 name='set_trigger_mode',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -200,7 +201,7 @@ class WBMSDriverNode(Node):
 
     def _declare_environment_params(self):
         self.declare_parameter(
-            name='sound_velocity', value=self.default_int_param,
+            name='sound_velocity', value=-1,
             descriptor=ParameterDescriptor(
                 name='sound_velocity',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -208,7 +209,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_time_source', value=self.default_int_param,
+            name='set_time_source', value=1,
             descriptor=ParameterDescriptor(
                 name='set_time_source',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -221,7 +222,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_ntp_server', value='',
+            name='set_ntp_server', value="192.168.1.91",
             descriptor=ParameterDescriptor(
                 name='set_ntp_server',
                 type=ParameterType.PARAMETER_STRING,
@@ -229,7 +230,7 @@ class WBMSDriverNode(Node):
             )
         )
         self.declare_parameter(
-            name='set_power', value=self.default_int_param,
+            name='set_power', value=0,
             descriptor=ParameterDescriptor(
                 name='set_power',
                 type=ParameterType.PARAMETER_INTEGER,
@@ -240,6 +241,7 @@ class WBMSDriverNode(Node):
 
 
     def send_parameters_update(self, params):
+        self.get_logger().info("send_parameters_update")
         messages = []
         for param in params:
             if param.type_ == Parameter.Type.INTEGER_ARRAY:
