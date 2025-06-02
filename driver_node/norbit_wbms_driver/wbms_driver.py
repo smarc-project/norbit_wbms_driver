@@ -13,9 +13,10 @@ class WBMSDriverNode(Node):
         super().__init__('wbms_driver')
         self.get_logger().info("Starting WBMS driver node.")
         
-        self.declare_parameter("sonar_ip", '192.168.1.53') #modify in launch file
-        self.sonar_ip = self.get_parameter("sonar_ip").value 
-        self.sonar_port = 2209
+        self.declare_parameter("sonar_ip", '192.168.1.53')
+        self.sonar_ip = self.get_parameter("sonar_ip").get_parameter_value().string_value
+        self.declare_parameter("sonar_port", 2209)
+        self.sonar_port = self.get_parameter("sonar_port").get_parameter_value().integer_value
 
         self.default_int_param = -1
         self.default_array_param = [-1]
