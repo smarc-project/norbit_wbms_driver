@@ -206,9 +206,12 @@ class BathymetryNode(Node):
         super().__init__('bathymetry_parser')
         self.get_logger().info("Starting Bathymetry Node")
 
-        self.declare_parameter("sonar_ip", '192.168.1.53') #modify in launch file
-        self.sonar_ip = self.get_parameter("sonar_ip").value
-        self.bathy_port = 2210
+        self.declare_parameter('sonar_ip', '127.0.0.1')
+        self.sonar_ip = self.get_parameter('sonar_ip').get_parameter_value().string_value
+        self.declare_parameter('bathy_port', 2210)
+        self.bathy_port = self.get_parameter('bathy_port').get_parameter_value().integer_value
+        self.declare_parameter('output_topic', 'bathymetry')
+        self.output_topic = self.get_parameter('output_topic').get_parameter_value().string_value
 
         self.tcp_retry_every = 5 # seconds
         self.tcp_socket = self.connect_to_sonar()
@@ -220,7 +223,7 @@ class BathymetryNode(Node):
         self.data_buffer = b''
 
         # Setup publisher.
-        self.bathymetry_pub = self.create_publisher(Bathymetry, 'bathymetry', 1)
+        self.bathymetry_pub = self.create_publisher(Bathymetry, self.output_topic, 1)
         self.bathymetry_pub_timer = self.create_timer(0.01, self.parse_and_publish)
 
 

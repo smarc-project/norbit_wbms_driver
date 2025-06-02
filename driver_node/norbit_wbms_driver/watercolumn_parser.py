@@ -271,9 +271,14 @@ class WaterColumnNode(Node):
         super().__init__('wc_parser')
         self.get_logger().info("Starting the WBMS water column parser node...")
         
-        self.declare_parameter("sonar_ip", '192.168.1.53') #modify in launch file
-        self.sonar_ip = self.get_parameter("sonar_ip").value 
-        self.watercolumn_port = 2211
+        self.declare_parameter('sonar_ip', '127.0.0.1')
+        self.sonar_ip = self.get_parameter('sonar_ip').get_parameter_value().string_value
+        self.declare_parameter('watercolumn_port', 2211)
+        self.watercolumn_port = self.get_parameter('watercolumn_port').get_parameter_value().integer_value
+        self.declare_parameter('output_topic', 'watercolumn')
+        self.output_topic = self.get_parameter('output_topic').get_parameter_value().string_value
+        self.declare_parameter('output_image_topic', 'watercolumn_raw_image')
+        self.output_image_topic = self.get_parameter('output_image_topic').get_parameter_value().string_value
 
         self.tcp_retry_every = 5 # seconds
         self.tcp_socket = self.connect_to_sonar()
@@ -285,9 +290,9 @@ class WaterColumnNode(Node):
         # Create the buffer where we'll store the data being streamed in.
         self.data_buffer = b''
 
-        self.watercolumn_pub = self.create_publisher(WaterColumn, 'watercolumn', 1)
+        self.watercolumn_pub = self.create_publisher(WaterColumn, self.output_topic, 1)
         self.watercolumn_pub_timer = self.create_timer(0.01, self.parse_and_publish)
-        self.watercolumn_raw_image_pub = self.create_publisher(Image, 'watercolumn_raw_image', 1)
+        self.watercolumn_raw_image_pub = self.create_publisher(Image, self.output_image_topic, 1)
 
 
     def connect_to_sonar(self):
