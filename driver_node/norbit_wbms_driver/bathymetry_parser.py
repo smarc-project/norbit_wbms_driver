@@ -278,13 +278,13 @@ class BathymetryNode(Node):
                     data, addr = self.tcp_socket.recvfrom(self.BUFFER_SIZE_BYTES)
                     self.data_buffer += data
                 except:
-                    print("something went wrong in the msg reconstruction loop")
+                    self.get_logger().error("something went wrong in the msg reconstruction loop")
 
         except socket.timeout:
             self.get_logger().error("Bathymetry interface socket timed out, verify connection.")
             return
 
-        print("Final size of the concat msg={}".format(len(self.data_buffer)))
+        self.get_logger().info("Final size of the concat msg={}".format(len(self.data_buffer)))
 
         # Build the Bathymetry message
         msg = self._build_bathymetry_msg()
