@@ -1,4 +1,4 @@
-/wbms_driver:
+/**:
   ros__parameters:
     ##########################################
     # SONAR SETTINGS

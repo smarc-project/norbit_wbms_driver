@@ -3,10 +3,8 @@
 <package format="3">
   <name>norbit_wbms_driver</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="liling@kth.se">li Ling</maintainer>
-  <maintainer email="kingar@kth.se">Ginnie Renz</maintainer>
-  <maintainer email="sdup@kth.se">Shekhar Upadhyay</maintainer>
+  <description>Driver for Norbit Multibeam/Forward Looking Sonar</description>
+  <maintainer email="liling@kth.se">Li Ling</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_python</buildtool_depend>

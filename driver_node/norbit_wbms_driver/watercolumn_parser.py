@@ -13,11 +13,6 @@ from sensor_msgs.msg import Image
 # from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 from norbit_wbms_interfaces.msg import WaterColumn
 
-__author__ = "Aldo Teran"
-__author_email = "aldot@kth.se"
-__license__ = "MIT"
-__status__ = "Development"
-
 SOCKET_TIMEOUT = 5
 
 
@@ -276,9 +271,14 @@ class WaterColumnNode(Node):
         super().__init__('wc_parser')
         self.get_logger().info("Starting the WBMS water column parser node...")
         
-        self.declare_parameter("sonar_ip", '192.168.1.53') #modify in launch file
-        self.sonar_ip = self.get_parameter("sonar_ip").value 
-        self.watercolumn_port = 2211
+        self.declare_parameter('sonar_ip', '127.0.0.1')
+        self.sonar_ip = self.get_parameter('sonar_ip').get_parameter_value().string_value
+        self.declare_parameter('watercolumn_port', 2211)
+        self.watercolumn_port = self.get_parameter('watercolumn_port').get_parameter_value().integer_value
+        self.declare_parameter('output_topic', 'watercolumn')
+        self.output_topic = self.get_parameter('output_topic').get_parameter_value().string_value
+        self.declare_parameter('output_image_topic', 'watercolumn_raw_image')
+        self.output_image_topic = self.get_parameter('output_image_topic').get_parameter_value().string_value
 
         self.tcp_retry_every = 5 # seconds
         self.tcp_socket = self.connect_to_sonar()
@@ -290,9 +290,9 @@ class WaterColumnNode(Node):
         # Create the buffer where we'll store the data being streamed in.
         self.data_buffer = b''
 
-        self.watercolumn_pub = self.create_publisher(WaterColumn, 'watercolumn', 1)
+        self.watercolumn_pub = self.create_publisher(WaterColumn, self.output_topic, 1)
         self.watercolumn_pub_timer = self.create_timer(0.01, self.parse_and_publish)
-        self.watercolumn_raw_image_pub = self.create_publisher(Image, 'watercolumn_raw_image', 1)
+        self.watercolumn_raw_image_pub = self.create_publisher(Image, self.output_image_topic, 1)
 
 
     def connect_to_sonar(self):
@@ -306,7 +306,7 @@ class WaterColumnNode(Node):
         tcp_socket.settimeout(SOCKET_TIMEOUT)
         tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        while not connected:
+        while not connected and rclpy.ok():
             try:
                 tcp_socket.connect((self.sonar_ip, self.watercolumn_port))
                 self.get_logger().info(f"Connected to sonar at {self.sonar_ip}:{self.watercolumn_port}")
@@ -338,7 +338,7 @@ class WaterColumnNode(Node):
             expected_size_bytes = 192 + M*N*step_size + 4*N
 
             # Keep looping until the full message is completely received.
-            while len(self.data_buffer) < expected_size_bytes:
+            while len(self.data_buffer) < expected_size_bytes and rclpy.ok():
                 try:
                     data, addr = self.tcp_socket.recvfrom(self.BUFFER_SIZE_BYTES)
                     self.data_buffer += data
@@ -410,6 +410,19 @@ class WaterColumnNode(Node):
         image.data = ((255/image_max) * pixel_data).astype('uint8').tolist()
         return image
 
+    def destroy_node(self):
+        """Detroy the node and close the TCP socket."""
+        self.get_logger().info("Shutting down water column parser node...")
+        if self.tcp_socket:
+            try:
+                self.tcp_socket.close()
+                self.get_logger().info("TCP socket closed successfully.")
+            except Exception as e:
+                self.get_logger().error(f"Error closing TCP socket: {str(e)}")
+        else:
+            self.get_logger().info("No TCP socket to close.")
+        super().destroy_node()
+
 
 def main(args=None):
     """
@@ -418,9 +431,13 @@ def main(args=None):
     rclpy.init(args=args)
 
     watercolumn_parser = WaterColumnNode()
-    rclpy.spin(watercolumn_parser)
-    watercolumn_parser.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(watercolumn_parser)
+    except KeyboardInterrupt:
+        watercolumn_parser.get_logger().info("Keyboard interrupt received, shutting down...")
+    finally:
+        watercolumn_parser.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == "__main__":
     main()
