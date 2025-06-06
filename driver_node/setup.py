@@ -28,6 +28,7 @@ setup(
             'bathymetry_parser = norbit_wbms_driver.bathymetry_parser:main',
             'watercolumn_parser = norbit_wbms_driver.watercolumn_parser:main',
             'watercolumn_visualizer = norbit_wbms_driver.watercolumn_visualizer:main',
+            'bathymetry_to_pointcloud = norbit_wbms_driver.bathymetry_to_pointcloud:main',
         ],
     },
 )
