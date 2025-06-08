@@ -2,7 +2,10 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from norbit_wbms_interfaces.msg import Bathymetry, BathymetryBeam
-from sensor_msgs.msg import PointCloud2
+import numpy as np
+from sensor_msgs.msg import PointCloud2, PointField
+from sensor_msgs_py import point_cloud2
+from std_msgs.msg import Header
 
 class Translator_node(Node):
 
@@ -12,14 +15,14 @@ class Translator_node(Node):
         input_topic = "input"
         output_topic = "output"
 
-        self.declare_parameter("input_topic", "bathymetry")
+        self.declare_parameter("input_topic", "/lolo/sensors/mbes/bathymetry")
         input_topic = self.get_parameter("input_topic").get_parameter_value().string_value
 
         self.declare_parameter("output_topic", "bathymetry/points")
         output_topic = self.get_parameter("output_topic").get_parameter_value().string_value
 
 
-        self.declare_parameter("frame_id", "mbes_link")
+        self.declare_parameter("frame_id", "lolo/base_link")
         self.frame_id = self.get_parameter("frame_id").get_parameter_value().string_value
 
         #Elevon port fb
@@ -27,41 +30,36 @@ class Translator_node(Node):
         self.sub_bathymetry = self.create_subscription(Bathymetry,input_topic,self.callback_bathmetry,1)
 
 
-    def callback_bathmetry(self, msg):
+    def callback_bathmetry(self, in_msg):
         print("Converting Bathymetry msg to pointcloud2 msg.")
 
         beams = in_msg.beams
         beams.sort(key=lambda x: x.angle)
 
-        #angles = [beam.angle for beam in in_msg.beams]
-        #for i in range(len(angles)-1):
-        #    if angles[i] > angles[i+1]:
-        #        print("Warning: Angles in bathymetry msg not strictly increasing")
-        
-        angles = [beam.angle for beam in in_msg.beams]
+        angles = [-1*beam.angle for beam in in_msg.beams]
         ranges = [beam.range for beam in in_msg.beams]
         intensities = [beam.intensity for beam in in_msg.beams]
 
-        angles = np.asarray(angles)
-        ranges = np.asarray(ranges)
-        intensities = np.asarray(intensities)
+        header = Header()
+        header.frame_id = self.frame_id
+        header.stamp = self.get_clock().now().to_msg()
+        fields = [PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+              PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+              PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
+              PointField(name='intensity', offset=12, datatype=PointField.FLOAT32, count=1)]
 
-        # Build the recarray with points and intensities
-        pointcloud = np.recarray((1,len(ranges)),dtype=[('x', np.float32),
-                                                        ('y', np.float32),
-                                                        ('z', np.float32),
-                                                        ('intensity', np.uint8)])
-        pointcloud['z'] = np.zeros(len(ranges))
-        pointcloud['y'] = ranges * np.sin(angles)
-        pointcloud['x'] = ranges * np.cos(angles)
-        pointcloud['intensity'] = intensities
+        
+        z = ranges * np.cos(angles)
+        z = z*-1
+        y = ranges * np.sin(angles)
+        x = np.zeros(len(ranges))
+        intensities = np.array(intensities)
 
-        # Do some magic
-        pointcloud_msg = ros_numpy.point_cloud2.array_to_pointcloud2(pointcloud)
-        pointcloud_msg.header.stamp = self.get_clock().now().to_msg()
-        pointcloud_msg.header.frame_id = self.frame_id
+        
+        points = np.array([x, y, z, intensities]).reshape(4, -1).T
+        pc2_msg = point_cloud2.create_cloud(header, fields, points)
 
-        self.pub_pc2.publish(pointcloud_msg)
+        self.pub_pc2.publish(pc2_msg)
 
 
 
