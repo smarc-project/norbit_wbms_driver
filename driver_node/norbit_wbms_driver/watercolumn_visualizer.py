@@ -1,6 +1,9 @@
 import rclpy
 from rclpy.node import Node
 import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from cv_bridge import CvBridge
 import cv2
 
 from sensor_msgs.msg import Image
@@ -11,6 +14,7 @@ class WaterColumnVisualizer(Node):
     def __init__(self):
         super().__init__("watercolumn_visualizer")
         self.get_logger().info("WaterColumnVisualizer node started")
+        self.cvbridge = CvBridge()
         self.message_counter = 0
         self.subscription = self.create_subscription(
             WaterColumn, "watercolumn", self.listener_callback, 10
@@ -38,32 +42,24 @@ class WaterColumnVisualizer(Node):
         aperture = msg.swath_open
         pixel_values = msg.watercolumn_raw.data
         angles = msg.watercolumn_beam_directions
+        ranges = np.linspace(0, 1, num_samples)
+        theta, r = np.meshgrid(angles, ranges)
+        x = r * np.sin(theta)
+        y = -r * np.cos(theta)
 
-        # add more data to cover 360 degrees
-        angle_per_beam = aperture / num_beams
-        full_circle_beams = int(360 / angle_per_beam)
-        full_circle_image = np.zeros((num_samples, full_circle_beams))
-        # populate middle part with the original data
-        start_index = int((full_circle_beams - num_beams) / 2)
-        full_circle_image[:, start_index : start_index + num_beams] = pixel_values
-
-        full_circle_image = full_circle_image.T
-        img_height, img_width = 512, 512
-        cartesian = cv2.warpPolar(
-            full_circle_image,
-            (img_width, img_height),
-            (img_width / 2, img_height / 2),
-            img_width / 2,
-            cv2.WARP_INVERSE_MAP+cv2.INTER_LINEAR+cv2.WARP_FILL_OUTLIERS,
+        fig, ax = plt.subplots(figsize=(6, 3), dpi=300)
+        pixel_values = np.array(pixel_values).reshape(num_samples, num_beams)
+        canvas = FigureCanvasAgg(fig)
+        c = ax.pcolormesh(
+            x, y, pixel_values, shading="auto", cmap="gray"
         )
-
-        cartesian_image = Image()
-        cartesian_image.data = cartesian
-        cartesian_image.width = img_width
-        cartesian_image.height = img_height
-        cartesian_image.encoding = "mono8"
-        cartesian_image.is_bigendian = False
-        cartesian_image.step = num_samples*2
+        ax.set_aspect("equal")
+        ax.axis("off")
+        canvas.draw()
+        image_np = np.frombuffer(canvas.tostring_rgb(), dtype=np.uint8)
+        w, h = canvas.get_width_height()
+        image_np = image_np.reshape((h, w, 3))
+        cartesian_image = self.cvbridge.cv2_to_imgmsg(image_np, encoding="rgb8")
         return cartesian_image
 
 
