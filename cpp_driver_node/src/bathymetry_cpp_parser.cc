@@ -4,7 +4,6 @@
 #include "norbit_wbms_interfaces/msg/bathymetry_beam.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "sensor_msgs/point_cloud2_iterator.hpp"
 #include "std_msgs/msg/header.hpp"
 
 namespace {
@@ -104,12 +103,7 @@ class BathymetryParser : public rclcpp::Node {
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
-
-  auto node = std::make_shared<BathymetryParser>();
-  // NOTE: needed this here to make it work with bags, CLI flags didn't work.
-   node->set_parameter(rclcpp::Parameter("use_sim_time", true));
-
-  rclcpp::spin(node);
+  rclcpp::spin(std::make_shared<BathymetryParser>());
   rclcpp::shutdown();
   return 0;
 }
