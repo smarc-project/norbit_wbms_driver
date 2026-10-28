@@ -5,6 +5,9 @@ This repository provides a ROS 2 driver for the Norbit WBMS multibeam sonar, whi
 - **`norbit_wbms_driver`**: A Python package that implements the sonar drivers, data parsers and visualizers.
 - **`sonar_interfaces`**: A C++ package containing custom ROS 2 message definitions used across the sonar system.
 
+## Recent change to Watercolumn message
+The data type of the raw watercolumn data has been changed from Image to Float32MultiArray. If you have problems playing older rosbags from Lolo (before 2026-11) try ckecking out an earlier version.
+
 ## Package Structure
 ### `norbit_wbms_driver`
 Contains the main ROS 2 nodes for interfacing with the sonar over TCP.

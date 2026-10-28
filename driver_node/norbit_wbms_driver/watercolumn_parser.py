@@ -10,7 +10,7 @@ from rclpy.node import Node
 import time
 
 from sensor_msgs.msg import Image
-# from std_msgs.msg import Float32MultiArray, MultiArrayDimension
+from std_msgs.msg import Float32MultiArray, MultiArrayDimension
 from norbit_wbms_interfaces.msg import WaterColumn
 
 SOCKET_TIMEOUT = 5
@@ -353,13 +353,39 @@ class WaterColumnNode(Node):
         self.get_logger().info(f'Stored {len(self.data_buffer)} bytes in data_buffer')
         self.get_logger().info(f'Expected size of the message: {expected_size_bytes} bytes')
 
-        msg = self._build_watercolumn_message()
-        self.watercolumn_pub.publish(msg)
-        self.watercolumn_raw_image_pub.publish(msg.watercolumn_raw)
-        # Consume the bytes that have been processed from the buffer.
-        self.data_buffer = self.data_buffer[expected_size_bytes:]
+        # Get the pixel and beam directions arrays.
+        pixel_data = self.p.parse_pixel_data(self.data_buffer)
+        directions = self.p.parse_directions(self.data_buffer)
 
-    def _build_watercolumn_message(self):
+        
+        # Build image message
+        image = Image()
+        image.header.stamp = self.get_clock().now().to_msg()
+        image.height = self.p.parse_num_samples(self.data_buffer) # M
+        image.width = self.p.parse_num_beams(self.data_buffer) # N
+        image.encoding = 'mono8'
+        image.step = image.width * 1
+        pixel_data = np.array(pixel_data)
+        image_max = np.max(pixel_data)
+        image.data = ((255/image_max) * pixel_data).astype('uint8').tolist()
+        
+        # Publish image message
+        self.watercolumn_raw_image_pub.publish(image) 
+        
+        # Build the multi array.
+        array = Float32MultiArray()
+        img_dim = MultiArrayDimension()
+        img_dim.label = "pixel_data"
+        img_dim.size = image.height * image.width
+        img_dim.stride = img_dim.size * 4
+        dir_dim = MultiArrayDimension()
+        dir_dim.label = "directions"
+        dir_dim.size = len(directions)
+        dir_dim.stride = dir_dim.size * 4
+        array.layout.dim = [img_dim, dir_dim]
+        array.data = np.array(pixel_data).astype(float).tolist() + directions
+
+        # Build raw data message
         msg = WaterColumn()
         msg.preamble = self.p.parse_preamble(self.data_buffer)
         msg.type = self.p.parse_type(self.data_buffer)
@@ -391,24 +417,15 @@ class WaterColumnNode(Node):
         msg.beam_dist_mode = self.p.parse_beam_dist_mode(self.data_buffer)
         msg.sonar_mode = self.p.parse_sonar_mode(self.data_buffer)
         msg.gate_tilt = self.p.parse_gate_tilt(self.data_buffer)
-        msg.watercolumn_raw = self._build_watercolumn_raw_image()
-        msg.watercolumn_beam_directions = self.p.parse_directions(self.data_buffer)
-        return msg
+        #msg.watercolumn_raw = image
+        msg.watercolumn_raw = array
+        msg.watercolumn_beam_directions = directions
 
-    def _build_watercolumn_raw_image(self):
-        # TODO: dynamically change image dencoding and data scaling
-        # based on the data type.
-        image = Image()
-        image.header.stamp = self.get_clock().now().to_msg()
-        image.height = self.p.parse_num_samples(self.data_buffer) # M
-        image.width = self.p.parse_num_beams(self.data_buffer) # N
-        image.encoding = 'mono8'
-        image.step = image.width * 1
-        pixel_data = self.p.parse_pixel_data(self.data_buffer)
-        pixel_data = np.array(pixel_data)
-        image_max = np.max(pixel_data)
-        image.data = ((255/image_max) * pixel_data).astype('uint8').tolist()
-        return image
+        self.watercolumn_pub.publish(msg)
+        self.get_logger().info('Published watercolumn message')
+        
+        # Consume the bytes that have been processed from the buffer.
+        self.data_buffer = self.data_buffer[expected_size_bytes:]
 
     def destroy_node(self):
         """Detroy the node and close the TCP socket."""
